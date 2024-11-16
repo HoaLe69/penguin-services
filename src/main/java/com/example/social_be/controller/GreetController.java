@@ -6,7 +6,7 @@ import org.springframework.ui.Model;
 
 @Controller
 public class GreetController {
-  @GetMapping("/")
+  @GetMapping("/hi")
   public String greet(Model model) {
     model.addAttribute("message", "Welcome to Penguin!!!");
     return "home"; // refres to resource/templates/home.html
