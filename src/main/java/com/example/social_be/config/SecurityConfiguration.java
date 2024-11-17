@@ -44,7 +44,9 @@ public class SecurityConfiguration {
       @Override
       public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**").allowedOrigins("https://penguin-brown-eight.vercel.app/")
-            .allowCredentials(true);
+            .allowCredentials(true)
+                .allowedHeaders("*")
+                .exposedHeaders("Set-Cookie");
       }
     };
   }
