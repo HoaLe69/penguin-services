@@ -12,14 +12,12 @@ public class AuthUtil {
     accessTokenCookie.setSecure(true);  // Only send the cookie over HTTPS
     accessTokenCookie.setMaxAge(60 * 60 * 24 * 7);  // 7 days
     accessTokenCookie.setPath("/");  // Cookie is available for all paths
-    accessTokenCookie.setDomain(".vercel.app");  // Set domain to the top-level domain
 
     Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
     refreshTokenCookie.setHttpOnly(true);  // Prevent JavaScript access to the cookie
     refreshTokenCookie.setSecure(true);  // Only send the cookie over HTTPS
     refreshTokenCookie.setMaxAge(60 * 60 * 24 * 7);  // 7 days
     refreshTokenCookie.setPath("/");  // Cookie is available for all paths
-    refreshTokenCookie.setDomain(".vercel.app");  // Set domain to the top-level domain
 
 // Add cookies to the response
     response.addCookie(accessTokenCookie);
