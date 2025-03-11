@@ -96,6 +96,26 @@ public class AuthController {
     String accessToken = jwtTokenUtil.generateJwtAccessToken(username);
     String refreshToken = jwtTokenUtil.generateJwtRefreshToken(username);
 
+    // Cookie accessTokenCookie = new Cookie("token", accessToken);
+    // accessTokenCookie.setHttpOnly(true);
+    // accessTokenCookie.setDomain(".vercel.app");
+    // accessTokenCookie.setSecure(true); // cookies will only sent over HTTPS
+    // connections
+    // accessTokenCookie.setMaxAge(60 * 60 * 24 * 7);
+    // accessTokenCookie.setPath("/");
+    //
+    // Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
+    // refreshTokenCookie.setHttpOnly(true);
+    // refreshTokenCookie.setSecure(true);
+    // refreshTokenCookie.setDomain(".vercel.app");
+    // refreshTokenCookie.setMaxAge(60 * 60 * 24 * 7);
+    // refreshTokenCookie.setPath("/");
+    // //
+    // // add cookies to the response
+    // response.addCookie(accessTokenCookie);
+    // response.addCookie(refreshTokenCookie);
+
+    // authUtil.attachTokenInCookieResponse(response, accessToken, refreshToken);
     authUtil.attachTokenInCookieResponse(response, accessToken, refreshToken);
 
     return ResponseEntity.ok("ok");

@@ -20,10 +20,35 @@ public class CloudinaryServiceImpl implements FileUpload {
 
   @Override
   public Map uploadFile(MultipartFile multipartFile) throws IOException {
-    return cloudinary.uploader().upload(multipartFile.getBytes(), Map.of("public_id", UUID.randomUUID().toString()));
+    String publicId = UUID.randomUUID().toString();
+    // Determine the resource type based on the file's content type
+    String contentType = multipartFile.getContentType();
+    String resourceType;
+
+    if (contentType != null && contentType.startsWith("video")) {
+      resourceType = "video";
+    } else if (contentType != null && contentType.startsWith("image")) {
+      resourceType = "image";
+    } else {
+      throw new IllegalArgumentException("Unsupported file type: " + contentType);
+    }
+
+    Map uploadResult = cloudinary.uploader().upload(multipartFile.getBytes(),
+        ObjectUtils.asMap("public_id", publicId, "resource_type", resourceType));
+    // return cloudinary.uploader().upload(multipartFile.getBytes(),
+    // Map.of("public_id", UUID.randomUUID().toString()));
+    return uploadResult;
   }
 
-  public String destroy(String publicId) throws IOException {
-    return cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap()).toString();
+  public String destroy(String publicId, String resourceType) throws IOException {
+    // Validate resource type
+    if (!"image".equals(resourceType) && !"video".equals(resourceType)) {
+      throw new IllegalArgumentException("Resource type must be 'image'or 'video");
+    }
+
+    // Destroy the resource with the specified resource_type
+    Map result = cloudinary.uploader().destroy(publicId, ObjectUtils.asMap("resource_type", resourceType));
+
+    return result.toString();
   }
 }

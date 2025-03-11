@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.jackson.Jacksonized;
+
+import org.apache.commons.lang3.ObjectUtils.Null;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.ArrayList;
@@ -27,10 +29,12 @@ public class PostCollection {
   private List<String> like;
   private String description;
   private long comments;
-  private String createAt;
+  private String videoSrc;
+  private String fileType;
+  private Date createAt;
 
   public PostCollection(String userId, String photoUrl, String displayName, String tag, String thumbnail,
-      String cloudinaryId, String description) {
+      String cloudinaryId, String description, String fileType, String videoSrc) {
     this.userId = userId;
     this.photoUrl = photoUrl;
     this.displayName = displayName;
@@ -40,10 +44,15 @@ public class PostCollection {
     this.like = new ArrayList<>();
     this.description = description;
     this.comments = 0;
-    this.createAt = new Utilties().dayTimeFormat();
+    this.createAt = new Date();
+    this.fileType = fileType;
+    this.videoSrc = videoSrc;
+
   }
 
   public PostCollection() {
-    this.createAt = new Utilties().dayTimeFormat();
+    this.createAt = new Date();
+    this.videoSrc = null;
+    this.fileType = null;
   }
 }

@@ -36,37 +36,45 @@ public class PostController {
   // create post
   @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
   @Transactional
-  public ResponseEntity<?> upload(@RequestPart(value = "thumbnail", required = false) MultipartFile multipartFile,
+  public ResponseEntity<?> upload(@RequestPart(value = "file", required = false) MultipartFile multipartFile,
       @RequestPart("formData") PostCollection postRequest) throws IOException {
-    if (multipartFile == null) {
-      PostCollection _post = new PostCollection();
-      _post.setUserId(postRequest.getUserId());
-      _post.setDisplayName(postRequest.getDisplayName());
-      _post.setPhotoUrl(postRequest.getPhotoUrl());
-      _post.setLike(new ArrayList<>());
-      _post.setDescription(postRequest.getDescription());
-      _post.setComments(0);
-      return ResponseEntity.ok(postRepository.save(_post));
+    // if (multipartFile == null) {
+    // PostCollection _post = new PostCollection();
+    // _post.setUserId(postRequest.getUserId());
+    // _post.setDisplayName(postRequest.getDisplayName());
+    // _post.setPhotoUrl(postRequest.getPhotoUrl());
+    // _post.setLike(new ArrayList<>());
+    // _post.setDescription(postRequest.getDescription());
+    // _post.setComments(0);
+    // return ResponseEntity.ok(postRepository.save(_post));
+    // } else {
+    Map<String, String> resource_url = cloudinary.uploadFile(multipartFile);
+    String fileType = postRequest.getFileType();
+    if (fileType.equals("image")) {
+      postRequest.setThumbnail(resource_url.get("url"));
+      postRequest.setVideoSrc(null);
     } else {
-      Map<String, String> thumbnail = cloudinary.uploadFile(multipartFile);
-      PostCollection _post = new PostCollection(postRequest.getUserId(), postRequest.getPhotoUrl(),
-          postRequest.getDisplayName(), postRequest.getTag(), thumbnail.get("url"), thumbnail.get("public_id"),
-          postRequest.getDescription());
-      return ResponseEntity.ok(postRepository.save(_post));
+      postRequest.setVideoSrc(resource_url.get("url"));
+      postRequest.setThumbnail(null);
     }
+    postRequest.setCloudinaryId(resource_url.get("public_id"));
+    PostCollection _post = new PostCollection(postRequest.getUserId(), postRequest.getPhotoUrl(),
+        postRequest.getDisplayName(), postRequest.getTag(), postRequest.getThumbnail(), postRequest.getCloudinaryId(),
+        postRequest.getDescription(), postRequest.getFileType(), postRequest.getVideoSrc());
+    return ResponseEntity.ok(postRepository.save(_post));
   }
 
   @PatchMapping(value = "/edit/{id}/{cloudId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
   @Transactional
   @Async
-  public ResponseEntity<?> edit(@RequestPart(value = "thumbnail", required = false) MultipartFile multipartFile,
+  public ResponseEntity<?> edit(@RequestPart(value = "file", required = false) MultipartFile multipartFile,
       @RequestPart("formData") PostCollection postCollection, @PathVariable String id, @PathVariable String cloudId)
       throws IOException {
     PostCollection _post = postRepository.findPostCollectionById(id);
     if (_post == null)
       return ResponseEntity.badRequest().body(new MessageResponse("post is not exiting"));
     if (multipartFile != null) {
-      cloudinary.destroy(cloudId);
+      cloudinary.destroy(cloudId, postCollection.getFileType());
       Map<String, String> thumbnail = cloudinary.uploadFile(multipartFile);
       _post.setThumbnail(thumbnail.get("url"));
       _post.setCloudinaryId(thumbnail.get("public_id"));
@@ -109,10 +117,11 @@ public class PostController {
   }
 
   // delete post
-  @DeleteMapping("/delete/{id}/{cloudId}")
+  @DeleteMapping("/delete/{id}/{cloudId}/{fileType}")
   @Transactional
-  public ResponseEntity<?> deletePost(@PathVariable String id, @PathVariable String cloudId) throws IOException {
-    cloudinary.destroy(cloudId);
+  public ResponseEntity<?> deletePost(@PathVariable String id, @PathVariable String cloudId,
+      @PathVariable String fileType) throws IOException {
+    cloudinary.destroy(cloudId, fileType);
     commentRepository.deleteAllByPostId(id);
     postRepository.deleteById(id);
     return ResponseEntity.ok(new MessageResponse("Delete Successfully"));

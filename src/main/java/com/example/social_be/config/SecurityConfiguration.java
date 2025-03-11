@@ -43,10 +43,11 @@ public class SecurityConfiguration {
     return new WebMvcConfigurer() {
       @Override
       public void addCorsMappings(CorsRegistry registry) {
+        // registry.addMapping("/**").allowedOrigins("http://localhost:3000")
         registry.addMapping("/**").allowedOrigins("https://penguin-brown-eight.vercel.app/")
             .allowCredentials(true)
-                .allowedHeaders("*")
-                .exposedHeaders("Set-Cookie");
+            .allowedHeaders("*")
+            .exposedHeaders("Set-Cookie");
       }
     };
   }
@@ -58,7 +59,7 @@ public class SecurityConfiguration {
         .cors(Customizer.withDefaults())
         .authorizeHttpRequests(
             auth -> auth.requestMatchers("/api/auth/**").permitAll()
-                    .requestMatchers("/hi").permitAll()
+                .requestMatchers("/hi").permitAll()
                 .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/api/user/**").authenticated()
                 .requestMatchers("/api/post/**").authenticated()

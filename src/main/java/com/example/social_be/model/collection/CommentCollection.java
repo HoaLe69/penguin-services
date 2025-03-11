@@ -8,6 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Date;
 
 @Document("comment")
 @Data
@@ -22,7 +23,7 @@ public class CommentCollection {
   private String content;
   private String level;
   private ArrayList<String> subCommentIds;
-  private String createAt;
+  private Date createAt;
 
   public CommentCollection(String userId, String avatar, String postId, String content, String displayName) {
     this.userId = userId;
@@ -31,7 +32,7 @@ public class CommentCollection {
     this.content = content;
     this.displayName = displayName;
     this.subCommentIds = new ArrayList<>();
-    this.createAt = new Utilties().dayTimeFormat();
+    this.createAt = new Date();
   }
 
   public CommentCollection(String userId, String avatar, String content, String displayName, String replyId,
@@ -42,11 +43,11 @@ public class CommentCollection {
     this.content = content;
     this.displayName = displayName;
     this.replyTo = replyId;
-    this.createAt = new Utilties().dayTimeFormat();
+    this.createAt = new Date();
   }
 
   public CommentCollection() {
-    this.createAt = new Utilties().dayTimeFormat();
+    this.createAt = new Date();
     this.subCommentIds = new ArrayList<>();
   }
 }

@@ -15,7 +15,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     registry.addEndpoint("/ws")
         // Allow the origin http://localhost:63343 to send messages to us. (Base URL of
         // the client)
-        .setAllowedOrigins("http://localhost:3000/")
+        // .setAllowedOrigins("http://localhost:3000/")
+        .setAllowedOrigins("https://penguin-brown-eight.vercel.app/")
         // Enable SockJS fallback options
         .withSockJS();
   }
