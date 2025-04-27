@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RestController
-@CrossOrigin("https://penguin-brown-eight.vercel.app/")
 @RequestMapping(value = "/api/user")
 public class UserController {
 

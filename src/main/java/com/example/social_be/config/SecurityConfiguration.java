@@ -12,8 +12,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
@@ -37,20 +35,6 @@ public class SecurityConfiguration {
 
   @Autowired
   public JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-
-  @Bean
-  public WebMvcConfigurer corsConfigurer() {
-    return new WebMvcConfigurer() {
-      @Override
-      public void addCorsMappings(CorsRegistry registry) {
-        // registry.addMapping("/**").allowedOrigins("http://localhost:3000")
-        registry.addMapping("/**").allowedOrigins("https://penguin-brown-eight.vercel.app/")
-            .allowCredentials(true)
-            .allowedHeaders("*")
-            .exposedHeaders("Set-Cookie");
-      }
-    };
-  }
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {

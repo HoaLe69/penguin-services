@@ -1,6 +1,5 @@
 package com.example.social_be.config;
 
-import com.example.social_be.repository.TokenRepository;
 import com.example.social_be.service.UserService;
 import com.example.social_be.util.JwtTokenUtil;
 import jakarta.servlet.FilterChain;
@@ -43,7 +42,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {
     try {
-      if (request.getServletPath().contains("/api/auth") || request.getServletPath().contains("/hi")) {
+      if (request.getServletPath().contains("/api/auth")) {
         filterChain.doFilter(request, response);
         return;
       }
@@ -52,7 +51,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
       if (StringUtils.hasText(token)) {
         String userName = jwtTokenUtil.getUserNameFromAccessToken(token);
-        logger.info("username " + userName);
         UserDetails userDetails = userService.loadUserByUsername(userName);
 
         if (userDetails != null

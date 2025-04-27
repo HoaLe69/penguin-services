@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@CrossOrigin("https://penguin-brown-eight.vercel.app/")
 @RequestMapping(value = "/api/post")
 public class PostController {
   @Autowired
