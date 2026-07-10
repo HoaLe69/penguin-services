@@ -1,0 +1,71 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: penguin-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+      MONGO_INITDB_DATABASE: social
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  app:
+    build: .
+    container_name: penguin-app
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      # --- MongoDB (standard Spring Data Mongo binding) ---
+      SPRING_DATA_MONGODB_URI: mongodb://root:root@mongo:27017/social?authSource=admin
+
+      # --- CORS: local frontend origin (see CorsConfig -> app.cors.allowed-origin) ---
+      APP_CORS_ALLOWED_ORIGIN: http://localhost:3000
+
+      # --- JWT (see JwtTokenUtil). expire values are in SECONDS ---
+      SOCIAL_APP_SECRET: dev-access-secret-change-me
+      SOCIAL_APP_SECRETREFRESH: dev-refresh-secret-change-me
+      SOCIAL_APP_EXPIRETIME: "86400"          # access token: 1 day
+      # NOTE: the refresh key uses the "sociall_app" typo that exists in the code
+      SOCIALL_APP_EXPIRETIMEREFRESH: "604800" # refresh token: 7 days
+
+      # --- Cloudinary (see CloudinaryConfig). Uploads fail without real values ---
+      SOCIAL_APP_CLOUDNAME: ${SOCIAL_APP_CLOUDNAME:-demo}
+      SOCIAL_APP_CLOUDAPIKEY: ${SOCIAL_APP_CLOUDAPIKEY:-000000000000000}
+      SOCIAL_APP_CLOUDSECRETKEY: ${SOCIAL_APP_CLOUDSECRETKEY:-demo-secret}
+
+      # --- Mail (see SendEmailService). Optional for local dev ---
+      SPRING_MAIL_HOST: ${SPRING_MAIL_HOST:-smtp.gmail.com}
+      SPRING_MAIL_PORT: ${SPRING_MAIL_PORT:-587}
+      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME:-}
+      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD:-}
+
+  # Optional web UI for the database. Start with:  docker compose --profile tools up
+  mongo-express:
+    image: mongo-express:1
+    container_name: penguin-mongo-express
+    profiles: ["tools"]
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://root:root@mongo:27017/?authSource=admin
+      ME_CONFIG_BASICAUTH: "false"
+
+volumes:
+  mongo-data:
