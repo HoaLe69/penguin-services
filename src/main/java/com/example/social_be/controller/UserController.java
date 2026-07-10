@@ -9,6 +9,7 @@ import com.example.social_be.model.response.UserResponse;
 import com.example.social_be.repository.CommentRepository;
 import com.example.social_be.repository.PostRepository;
 import com.example.social_be.repository.UserRepository;
+import com.example.social_be.security.SecurityUtils;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.http.HttpStatus;
@@ -90,6 +91,7 @@ public class UserController {
   @Transactional
   @Async
   public ResponseEntity<?> updateUser(@RequestBody UserUpdateRequest update, @PathVariable String id) {
+    SecurityUtils.requireSelf(id);
     try {
       UserCollection user = userRepository.findUserCollectionById(id);
       if (user == null)
@@ -105,6 +107,7 @@ public class UserController {
   // delete user by id
   @DeleteMapping("/delete/{id}")
   public ResponseEntity<?> deleteUser(@PathVariable String id) {
+    SecurityUtils.requireSelf(id);
     userRepository.deleteById(id);
     return ResponseEntity.ok(new MessageResponse("Delete Successfully !!"));
   }
@@ -112,8 +115,8 @@ public class UserController {
   // follow and unfollow
   @PatchMapping("/interactive/{visiter}")
   @Transactional
-  public ResponseEntity<?> interactiveUser(@RequestBody UserCollection userLogin, @PathVariable String visiter) {
-    String currentId = userLogin.getId();
+  public ResponseEntity<?> interactiveUser(@PathVariable String visiter) {
+    String currentId = SecurityUtils.currentUserId();
     if (!currentId.equals(visiter)) {
       UserCollection currentUser = userRepository.findUserCollectionById(currentId);
       UserCollection userFollow = userRepository.findUserCollectionById(visiter);
