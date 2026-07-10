@@ -1,0 +1,14 @@
+package com.example.social_be.exception;
+
+/**
+ * Thrown when a requested resource does not exist. Maps to HTTP 404.
+ */
+public class ResourceNotFoundException extends RuntimeException {
+  public ResourceNotFoundException(String message) {
+    super(message);
+  }
+
+  public static ResourceNotFoundException of(String resource, String id) {
+    return new ResourceNotFoundException(resource + " not found: " + id);
+  }
+}
