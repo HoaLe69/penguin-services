@@ -3,8 +3,11 @@ package com.example.social_be.controller;
 import com.example.social_be.model.collection.PostCollection;
 import com.example.social_be.model.request.RequestList;
 import com.example.social_be.model.response.MessageResponse;
+import com.example.social_be.exception.ForbiddenException;
+import com.example.social_be.exception.ResourceNotFoundException;
 import com.example.social_be.repository.CommentRepository;
 import com.example.social_be.repository.PostRepository;
+import com.example.social_be.security.SecurityUtils;
 import com.example.social_be.service.CloudinaryServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -71,7 +74,9 @@ public class PostController {
       throws IOException {
     PostCollection _post = postRepository.findPostCollectionById(id);
     if (_post == null)
-      return ResponseEntity.badRequest().body(new MessageResponse("post is not exiting"));
+      throw ResourceNotFoundException.of("Post", id);
+    if (!_post.getUserId().equals(SecurityUtils.currentUserId()))
+      throw new ForbiddenException("You are not the owner of this post");
     if (multipartFile != null) {
       cloudinary.destroy(cloudId, postCollection.getFileType());
       Map<String, String> thumbnail = cloudinary.uploadFile(multipartFile);
@@ -120,15 +125,21 @@ public class PostController {
   @Transactional
   public ResponseEntity<?> deletePost(@PathVariable String id, @PathVariable String cloudId,
       @PathVariable String fileType) throws IOException {
+    PostCollection post = postRepository.findPostCollectionById(id);
+    if (post == null)
+      throw ResourceNotFoundException.of("Post", id);
+    if (!post.getUserId().equals(SecurityUtils.currentUserId()))
+      throw new ForbiddenException("You are not the owner of this post");
     cloudinary.destroy(cloudId, fileType);
     commentRepository.deleteAllByPostId(id);
     postRepository.deleteById(id);
     return ResponseEntity.ok(new MessageResponse("Delete Successfully"));
   }
 
-  @PatchMapping("/react/{id}/{userId}")
+  @PatchMapping("/react/{id}")
   @Transactional
-  public ResponseEntity<?> reactPost(@PathVariable String id, @PathVariable String userId) {
+  public ResponseEntity<?> reactPost(@PathVariable String id) {
+    String userId = SecurityUtils.currentUserId();
     PostCollection post = postRepository.findPostCollectionById(id);
     if (post != null) {
       List<String> likes = post.getLike();
