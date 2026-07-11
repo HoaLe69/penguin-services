@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
@@ -35,9 +36,15 @@ public class SocialAppProperties {
 
   @Data
   public static class Jwt {
+    // HS512 requires a key of at least 512 bits; a 64-character (ASCII)
+    // secret gives exactly that. jjwt's Keys.hmacShaKeyFor throws
+    // WeakKeyException for anything shorter, so this is checked here
+    // instead of failing deep inside token generation on first use.
     @NotBlank
+    @Size(min = 64, message = "must be at least 64 characters (512 bits) for HS512")
     private String secret;
     @NotBlank
+    @Size(min = 64, message = "must be at least 64 characters (512 bits) for HS512")
     private String refreshSecret;
     @Positive
     private long accessTtl;
