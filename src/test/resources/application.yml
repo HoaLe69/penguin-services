@@ -1,0 +1,25 @@
+# Test-only config for @SpringBootTest classes that boot the full context
+# (AbstractIntegrationTest and its subclasses). Mongo connection details are
+# NOT here - they're injected automatically by @ServiceConnection from the
+# Testcontainers Mongo container. Everything else SocialAppProperties/Spring
+# Boot autoconfiguration requires to boot at all gets a dummy-but-valid
+# value; nothing here is a real credential.
+social-app:
+  jwt:
+    secret: "test-only-access-secret-0123456789abcdef0123456789abcdef0123456789"
+    refresh-secret: "test-only-refresh-secret-0123456789abcdef0123456789abcdef0123456"
+    access-ttl: 86400
+    refresh-ttl: 604800
+  cloudinary:
+    cloud-name: test-cloud
+    cloud-api-key: test-key
+    cloud-secret-key: test-secret
+  cors:
+    allowed-origins: http://localhost:3000
+  cookie:
+    secure: false
+
+spring:
+  mail:
+    host: localhost
+    port: 3025
