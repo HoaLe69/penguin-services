@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-`penguin-services` (Maven artifact `social_BE`) is the Spring Boot backend for a social network app. Its frontend lives at `https://penguin-brown-eight.vercel.app` — that origin is hardcoded in several places (CORS, WebSocket allowed origins). Stack: Java 17, Spring Boot 3.1.5, MongoDB, Spring Security + JWT, STOMP WebSocket, Cloudinary (media), Spring Mail + Thymeleaf (transactional email).
+`penguin-services` (Maven artifact `social_BE`) is the Spring Boot backend for a social network app. Its frontend lives at `https://penguin-brown-eight.vercel.app`; allowed origins (CORS and WebSocket) are configured via `social-app.cors.allowed-origins`, not hardcoded — see `CorsConfig`/`WebSocketConfig`. Stack: Java 17, Spring Boot 3.1.5, MongoDB, Spring Security + JWT, STOMP WebSocket, Cloudinary (media), Spring Mail + Thymeleaf (transactional email).
 
 ## Commands
 

@@ -3,9 +3,18 @@ package com.example.social_be.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.List;
+
+/**
+ * The single CORS mechanism for the app: SecurityConfiguration's
+ * `.cors(Customizer.withDefaults())` picks up this CorsConfigurationSource
+ * bean automatically, so there is no separate WebMvcConfigurer registration
+ * competing with it.
+ */
 @Configuration
 public class CorsConfig {
 
@@ -13,17 +22,16 @@ public class CorsConfig {
   private SocialAppProperties properties;
 
   @Bean
-  public WebMvcConfigurer corsConfigurer() {
+  public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
+    configuration.setAllowedOrigins(properties.getCors().getAllowedOrigins());
+    configuration.setAllowedMethods(List.of("*"));
+    configuration.setAllowedHeaders(List.of("*"));
+    configuration.setExposedHeaders(List.of("Set-Cookie"));
+    configuration.setAllowCredentials(true);
 
-    return new WebMvcConfigurer() {
-      @Override
-      public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
-            .allowedOrigins(properties.getCors().getAllowedOrigins().toArray(new String[0]))
-            .allowCredentials(true)
-            .allowedMethods("*")
-            .exposedHeaders("Set-Cookie");
-      }
-    };
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+    return source;
   }
 }

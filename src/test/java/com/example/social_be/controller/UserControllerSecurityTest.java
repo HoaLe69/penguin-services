@@ -10,9 +10,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,6 +24,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -135,12 +138,48 @@ class UserControllerSecurityTest {
     match.setEmail("someone@x.com");
     match.setSocialId("google-456");
     match.setPassword("$2a$hashed");
-    when(userRepository.findByLikeEmail(anyString())).thenReturn(List.of(match));
+    when(userRepository.findByLikeEmail(anyString(), any(Pageable.class))).thenReturn(List.of(match));
 
     mockMvc.perform(get("/api/user/search").param("email", "someone"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].password").doesNotExist())
         .andExpect(jsonPath("$[0].socialId").doesNotExist())
         .andExpect(jsonPath("$[0].email").value("someone@x.com"));
+  }
+
+  @Test
+  void search_escapesRegexSpecialCharacters_andAnchorsAsPrefix() throws Exception {
+    when(userRepository.findByLikeEmail(anyString(), any(Pageable.class))).thenReturn(List.of());
+
+    mockMvc.perform(get("/api/user/search").param("email", "a.*evil(x)"))
+        .andExpect(status().isOk());
+
+    ArgumentCaptor<String> patternCaptor = ArgumentCaptor.forClass(String.class);
+    verify(userRepository).findByLikeEmail(patternCaptor.capture(), any(Pageable.class));
+    String pattern = patternCaptor.getValue();
+    assertThat(pattern).startsWith("^");
+    assertThat(pattern).contains("\\Qa.*evil(x)\\E");
+  }
+
+  @Test
+  void search_belowMinLength_returnsEmpty_withoutQueryingRepository() throws Exception {
+    mockMvc.perform(get("/api/user/search").param("email", "a"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$").isArray())
+        .andExpect(jsonPath("$").isEmpty());
+
+    verify(userRepository, never()).findByLikeEmail(anyString(), any(Pageable.class));
+  }
+
+  @Test
+  void search_capsResultsAtThreeViaPageable() throws Exception {
+    when(userRepository.findByLikeEmail(anyString(), any(Pageable.class))).thenReturn(List.of());
+
+    mockMvc.perform(get("/api/user/search").param("email", "someone"))
+        .andExpect(status().isOk());
+
+    ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+    verify(userRepository).findByLikeEmail(anyString(), pageableCaptor.capture());
+    assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(3);
   }
 }
