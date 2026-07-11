@@ -1,7 +1,6 @@
 package com.example.social_be.controller;
 
-import com.example.social_be.repository.CommentRepository;
-import com.example.social_be.repository.PostRepository;
+import com.example.social_be.service.CommentService;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.data.domain.Pageable;
@@ -15,13 +14,11 @@ import org.springframework.web.bind.annotation.*;
 public class CommentController {
 
   @Autowired
-  private CommentRepository commentRepository;
-  @Autowired
-  private PostRepository postRepository;
+  private CommentService commentService;
 
   @GetMapping("/{id}")
   public ResponseEntity<?> getAllComment(@PathVariable String id,
       @PageableDefault(sort = "createAt", direction = Sort.Direction.DESC) Pageable pageable) {
-    return ResponseEntity.ok(commentRepository.findAllByPostId(id, pageable));
+    return ResponseEntity.ok(commentService.getAllComment(id, pageable));
   }
 }

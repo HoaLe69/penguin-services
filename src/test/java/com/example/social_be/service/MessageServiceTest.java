@@ -25,6 +25,36 @@ class MessageServiceTest {
   private MessageService messageService;
 
   @Test
+  void getAllMessages_delegatesToRepository() {
+    MessageCollection message = new MessageCollection();
+    message.setId("m1");
+    when(messageRepository.findAllByConversationId("conv-1")).thenReturn(java.util.List.of(message));
+
+    assertThat(messageService.getAllMessages("conv-1")).containsExactly(message);
+  }
+
+  @Test
+  void recallMessage_notFound_returnsNull() {
+    when(messageRepository.findMessageCollectionById("missing")).thenReturn(null);
+
+    assertThat(messageService.recallMessage("missing")).isNull();
+    verify(messageRepository, never()).save(any());
+  }
+
+  @Test
+  void recallMessage_found_clearsContentAndSaves() {
+    MessageCollection message = new MessageCollection();
+    message.setId("m1");
+    message.setContent("secret");
+    when(messageRepository.findMessageCollectionById("m1")).thenReturn(message);
+    when(messageRepository.save(any(MessageCollection.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    MessageCollection result = messageService.recallMessage("m1");
+
+    assertThat(result.getContent()).isNull();
+  }
+
+  @Test
   void create_savesMessage() {
     MessageRequestSocket request = new MessageRequestSocket("user-1", "hello", null, null, 0, "conv-1", null);
     when(messageRepository.save(any(MessageCollection.class))).thenAnswer(inv -> inv.getArgument(0));

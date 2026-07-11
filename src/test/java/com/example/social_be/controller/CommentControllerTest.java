@@ -2,6 +2,7 @@ package com.example.social_be.controller;
 
 import com.example.social_be.repository.CommentRepository;
 import com.example.social_be.repository.PostRepository;
+import com.example.social_be.service.CommentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -31,12 +33,16 @@ class CommentControllerTest {
   @Mock
   private PostRepository postRepository;
   @InjectMocks
-  private CommentController controller;
+  private CommentService commentService;
 
+  private CommentController controller;
   private MockMvc mockMvc;
 
   @BeforeEach
   void setup() {
+    controller = new CommentController();
+    ReflectionTestUtils.setField(controller, "commentService", commentService);
+
     mockMvc = MockMvcBuilders.standaloneSetup(controller)
         .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
         .build();

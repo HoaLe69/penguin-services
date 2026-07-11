@@ -3,6 +3,7 @@ package com.example.social_be.controller;
 import com.example.social_be.exception.GlobalExceptionHandler;
 import com.example.social_be.model.collection.ConversationCollection;
 import com.example.social_be.repository.ConversationRepository;
+import com.example.social_be.service.ConversationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.MediaType;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -32,12 +34,16 @@ class ConversationControllerTest {
   @Mock
   private MongoTemplate mongoTemplate;
   @InjectMocks
-  private ConversationController controller;
+  private ConversationService conversationService;
 
+  private ConversationController controller;
   private MockMvc mockMvc;
 
   @BeforeEach
   void setup() {
+    controller = new ConversationController();
+    ReflectionTestUtils.setField(controller, "conversationService", conversationService);
+
     mockMvc = MockMvcBuilders.standaloneSetup(controller)
         .setControllerAdvice(new GlobalExceptionHandler())
         .build();

@@ -3,9 +3,8 @@ package com.example.social_be.controller;
 import com.example.social_be.exception.GlobalExceptionHandler;
 import com.example.social_be.model.collection.UserCollection;
 import com.example.social_be.model.custom.CustomUserDetail;
-import com.example.social_be.repository.CommentRepository;
-import com.example.social_be.repository.PostRepository;
 import com.example.social_be.repository.UserRepository;
+import com.example.social_be.service.UserService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +20,7 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -47,16 +46,11 @@ class UserControllerSecurityTest {
   @Mock
   private UserRepository userRepository;
   @Mock
-  private PasswordEncoder encoder;
-  @Mock
-  private PostRepository postRepository;
-  @Mock
-  private CommentRepository commentRepository;
-  @Mock
   private MongoTemplate mongoTemplate;
   @InjectMocks
-  private UserController controller;
+  private UserService userService;
 
+  private UserController controller;
   private MockMvc mockMvc;
 
   private static final String ME = "user-1";
@@ -64,6 +58,9 @@ class UserControllerSecurityTest {
 
   @BeforeEach
   void setup() {
+    controller = new UserController();
+    ReflectionTestUtils.setField(controller, "userService", userService);
+
     mockMvc = MockMvcBuilders.standaloneSetup(controller)
         .setControllerAdvice(new GlobalExceptionHandler())
         .build();
