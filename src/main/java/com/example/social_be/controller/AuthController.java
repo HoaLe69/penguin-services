@@ -48,34 +48,31 @@ public class AuthController {
   @Transactional
   @Async
   public ResponseEntity<?> login(@RequestBody AuthLoginRequest authLoginRequest, HttpServletResponse response) {
-    try {
-
-      UserCollection userCheck = userRepository.findUserCollectionByUserName(authLoginRequest.getUserName());
-      if (userCheck == null)
+    UserCollection userCheck = userRepository.findUserCollectionByUserName(authLoginRequest.getUserName());
+    if (userCheck == null)
         return ResponseEntity.badRequest().body(new MessageResponse("Username không tồn tại!!!"));
-      Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-          authLoginRequest.getUserName(), authLoginRequest.getPassword()));
-      SecurityContextHolder.getContext().setAuthentication(authentication);
-      String accessToken = jwtTokenUtil.generateJwtAccessToken(authLoginRequest.getUserName());
-      String refreshToken = jwtTokenUtil.generateJwtRefreshToken(authLoginRequest.getUserName());
+    // A wrong password throws BadCredentialsException here, which the
+    // GlobalExceptionHandler maps to 401 (previously an unhandled 500).
+    Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
+        authLoginRequest.getUserName(), authLoginRequest.getPassword()));
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+    String accessToken = jwtTokenUtil.generateJwtAccessToken(authLoginRequest.getUserName());
+    String refreshToken = jwtTokenUtil.generateJwtRefreshToken(authLoginRequest.getUserName());
 
-      Cookie accessTokenCookie = new Cookie("token", accessToken);
-      accessTokenCookie.setHttpOnly(true);
-      accessTokenCookie.setMaxAge(60 * 60 * 24);
-      accessTokenCookie.setPath("/");
+    Cookie accessTokenCookie = new Cookie("token", accessToken);
+    accessTokenCookie.setHttpOnly(true);
+    accessTokenCookie.setMaxAge(60 * 60 * 24);
+    accessTokenCookie.setPath("/");
 
-      Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
-      refreshTokenCookie.setHttpOnly(true);
-      refreshTokenCookie.setMaxAge(60 * 60 * 24 * 7);
-      refreshTokenCookie.setPath("/");
-      // add cookies to the response
-      response.addCookie(accessTokenCookie);
-      response.addCookie(refreshTokenCookie);
+    Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
+    refreshTokenCookie.setHttpOnly(true);
+    refreshTokenCookie.setMaxAge(60 * 60 * 24 * 7);
+    refreshTokenCookie.setPath("/");
+    // add cookies to the response
+    response.addCookie(accessTokenCookie);
+    response.addCookie(refreshTokenCookie);
 
-      return ResponseEntity.ok("Login Successfully!");
-    } catch (Error ex) {
-      throw ex;
-    }
+    return ResponseEntity.ok("Login Successfully!");
   }
 
   @PostMapping("/loginWithSocial")
