@@ -22,13 +22,16 @@ Docker: `docker build -t social-be .` produces a multi-stage image (`mvn package
 
 ## Configuration (required before the app will start)
 
-`src/main/resources/application.properties` is **gitignored** and must be created locally. The code injects these property keys via `@Value` — they have no defaults, so a missing/misspelled key fails startup:
+`src/main/resources/application.properties` is **gitignored** and must be created locally (or set the equivalent env vars — see `docker-compose.yml` / `.env.example`). App-specific config is a single typed, validated `@ConfigurationProperties` bean (`config/SocialAppProperties`) under the `social-app.*` prefix; a missing/blank required value fails startup with a descriptive error instead of an obscure `@Value` resolution failure:
 
-- Mongo: `spring.data.mongodb.*` (standard Spring Data Mongo connection properties)
-- Cloudinary: `social_app.cloudName`, `social_app.cloudApiKey`, `social_app.cloudSecretKey`
-- JWT: `social_app.secret`, `social_app.secretRefresh`, `social_app.expireTime`, and **`sociall_app.expireTimeRefresh`** (note the intentional typo `sociall_` — it must match exactly in the properties file; see `JwtTokenUtil`)
-- CORS: `app.cors.allowed-origin`
+- Mongo: `spring.data.mongodb.*` (standard Spring Data Mongo connection properties, not part of `SocialAppProperties`)
+- Cloudinary: `social-app.cloudinary.cloud-name`, `social-app.cloudinary.cloud-api-key`, `social-app.cloudinary.cloud-secret-key`
+- JWT: `social-app.jwt.secret`, `social-app.jwt.refresh-secret`, `social-app.jwt.access-ttl`, `social-app.jwt.refresh-ttl` (seconds; see `JwtTokenUtil`)
+- CORS: `social-app.cors.allowed-origins` (comma-separated list, fed to both `CorsConfig` and — once REF-12 lands — the WebSocket allowed origins)
+- Cookies: `social-app.cookie.secure` (default `true`; set `false` for local http-only dev, which also relaxes `SameSite` from `None` to `Lax` — see `CookieService`)
 - Mail: `spring.mail.*` for `SendEmailService`
+
+Property keys use kebab-case but bind via Spring's relaxed rules, so the equivalent env var for e.g. `social-app.jwt.secret` is `SOCIAL_APP_JWT_SECRET`.
 
 ## Architecture
 
