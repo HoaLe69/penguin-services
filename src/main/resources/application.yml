@@ -1,0 +1,21 @@
+# Structural, non-secret defaults only. Secrets (JWT keys, Cloudinary,
+# Mongo, mail) have no defaults here on purpose — they must come from env
+# vars or a local (gitignored) application.properties, so a missing value
+# fails startup loudly instead of silently falling back to something wrong.
+social-app:
+  cookie:
+    secure: true
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+# Local http-only dev: relax cookies (CookieService falls back SameSite to
+# Lax when secure=false) and default the CORS origin to the local frontend.
+social-app:
+  cookie:
+    secure: false
+  cors:
+    allowed-origins: http://localhost:3000

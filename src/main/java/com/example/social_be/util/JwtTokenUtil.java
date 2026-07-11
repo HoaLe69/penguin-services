@@ -1,21 +1,16 @@
 package com.example.social_be.util;
 
+import com.example.social_be.config.SocialAppProperties;
 import io.jsonwebtoken.*;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
 
 @Component
 public class JwtTokenUtil {
-  @Value("${social_app.secret}")
-  private String jwtSecretKey;
-  @Value("${social_app.secretRefresh}")
-  private String jwtSecretKeyRefresh;
-  @Value("${social_app.expireTime}")
-  private long TOKEN_VALIDITY;
-  @Value("${sociall_app.expireTimeRefresh}")
-  private long TOKEN_VALIDITY_REFRESH;
+  @Autowired
+  private SocialAppProperties properties;
 
   public String generateToken(String userName, String secretKey, long expireTime) {
     return Jwts.builder().setSubject(userName).setIssuedAt(new Date(System.currentTimeMillis()))
@@ -30,11 +25,11 @@ public class JwtTokenUtil {
   }
 
   public String generateJwtAccessToken(String userName) {
-    return this.generateToken(userName, jwtSecretKey, TOKEN_VALIDITY);
+    return this.generateToken(userName, properties.getJwt().getSecret(), properties.getJwt().getAccessTtl());
   }
 
   public String generateJwtRefreshToken(String userName) {
-    return this.generateToken(userName, jwtSecretKeyRefresh, TOKEN_VALIDITY_REFRESH);
+    return this.generateToken(userName, properties.getJwt().getRefreshSecret(), properties.getJwt().getRefreshTtl());
   }
 
   public boolean validateToken(String userName, String token, String secretKey) {
@@ -45,26 +40,26 @@ public class JwtTokenUtil {
   }
 
   public boolean validateJwtAccessToken(String token, String userName) {
-    return this.validateToken(userName, token, jwtSecretKey);
+    return this.validateToken(userName, token, properties.getJwt().getSecret());
   }
 
   public boolean validateJwtRefreshToken(String token, String userName) {
-    return this.validateToken(userName, token, jwtSecretKeyRefresh);
+    return this.validateToken(userName, token, properties.getJwt().getRefreshSecret());
   }
 
   public String getUserNameFromAccessToken(String token) {
-    return this.getUserNameFromClamis(token, jwtSecretKey);
+    return this.getUserNameFromClamis(token, properties.getJwt().getSecret());
   }
 
   public String getUserNameFromRefreshToken(String token) {
-    return this.getUserNameFromClamis(token, jwtSecretKeyRefresh);
+    return this.getUserNameFromClamis(token, properties.getJwt().getRefreshSecret());
   }
 
   public long getAccessTokenValiditySeconds() {
-    return TOKEN_VALIDITY;
+    return properties.getJwt().getAccessTtl();
   }
 
   public long getRefreshTokenValiditySeconds() {
-    return TOKEN_VALIDITY_REFRESH;
+    return properties.getJwt().getRefreshTtl();
   }
 }

@@ -1,5 +1,6 @@
 package com.example.social_be.util;
 
+import com.example.social_be.config.SocialAppProperties;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -10,16 +11,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CookieServiceTest {
 
-  private CookieService secureService() {
+  private CookieService serviceWithSecure(boolean secure) {
     CookieService service = new CookieService();
-    ReflectionTestUtils.setField(service, "secure", true);
+    SocialAppProperties properties = new SocialAppProperties();
+    properties.getCookie().setSecure(secure);
+    ReflectionTestUtils.setField(service, "properties", properties);
     return service;
   }
 
+  private CookieService secureService() {
+    return serviceWithSecure(true);
+  }
+
   private CookieService relaxedService() {
-    CookieService service = new CookieService();
-    ReflectionTestUtils.setField(service, "secure", false);
-    return service;
+    return serviceWithSecure(false);
   }
 
   @Test
