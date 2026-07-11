@@ -16,8 +16,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -38,7 +36,6 @@ public class PostController {
 
   // create post
   @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-  @Transactional
   public ResponseEntity<?> upload(@RequestPart(value = "file", required = false) MultipartFile multipartFile,
       @RequestPart("formData") PostCollection postRequest) throws IOException {
     // if (multipartFile == null) {
@@ -68,8 +65,6 @@ public class PostController {
   }
 
   @PatchMapping(value = "/edit/{id}/{cloudId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-  @Transactional
-  @Async
   public ResponseEntity<?> edit(@RequestPart(value = "file", required = false) MultipartFile multipartFile,
       @RequestPart("formData") PostCollection postCollection, @PathVariable String id, @PathVariable String cloudId)
       throws IOException {
@@ -112,14 +107,12 @@ public class PostController {
   }
 
   @GetMapping("/{id}")
-  @Transactional
   public ResponseEntity<?> getPostById(@PathVariable String id) {
     return ResponseEntity.ok(postRepository.findPostCollectionById(id));
   }
 
   // delete post
   @DeleteMapping("/delete/{id}/{cloudId}/{fileType}")
-  @Transactional
   public ResponseEntity<?> deletePost(@PathVariable String id, @PathVariable String cloudId,
       @PathVariable String fileType) throws IOException {
     PostCollection post = postRepository.findPostCollectionById(id);
@@ -134,7 +127,6 @@ public class PostController {
   }
 
   @PatchMapping("/react/{id}")
-  @Transactional
   public ResponseEntity<?> reactPost(@PathVariable String id) {
     String userId = SecurityUtils.currentUserId();
     PostCollection post = postRepository.findPostCollectionById(id);
