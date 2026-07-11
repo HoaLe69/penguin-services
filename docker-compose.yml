@@ -34,9 +34,11 @@ services:
       # --- CORS: local frontend origin(s), comma-separated (see SocialAppProperties.Cors) ---
       SOCIAL_APP_CORS_ALLOWED_ORIGINS: http://localhost:3000
 
-      # --- JWT (see SocialAppProperties.Jwt). TTL values are in SECONDS ---
-      SOCIAL_APP_JWT_SECRET: dev-access-secret-change-me
-      SOCIAL_APP_JWT_REFRESH_SECRET: dev-refresh-secret-change-me
+      # --- JWT (see SocialAppProperties.Jwt). TTL values are in SECONDS.
+      # Secrets must be >= 64 chars (512 bits) for HS512 - these dev values
+      # are fine for local docker-compose but change them for anything real. ---
+      SOCIAL_APP_JWT_SECRET: dev-access-secret-change-me-0123456789abcdef0123456789abcdef0123456789
+      SOCIAL_APP_JWT_REFRESH_SECRET: dev-refresh-secret-change-me-fedcba9876543210fedcba9876543210fedcba987
       SOCIAL_APP_JWT_ACCESS_TTL: "86400"  # access token: 1 day
       SOCIAL_APP_JWT_REFRESH_TTL: "604800" # refresh token: 7 days
 
