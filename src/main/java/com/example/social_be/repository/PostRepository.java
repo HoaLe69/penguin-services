@@ -6,12 +6,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.Collection;
-import java.util.List;
 
 public interface PostRepository extends MongoRepository<PostCollection, String> {
   PostCollection findPostCollectionById(String id);
 
-  List<PostCollection> findAllByUserId(String id);
+  Page<PostCollection> findAllByUserId(String id, Pageable pageable);
 
   // Single $in query for a feed of followed users, instead of one query per
   // user id.
