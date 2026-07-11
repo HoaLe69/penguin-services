@@ -33,6 +33,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -203,5 +204,21 @@ class UserControllerSecurityTest {
         .andExpect(jsonPath("$.code").value("NOT_FOUND"));
 
     verify(userRepository, never()).save(any(UserCollection.class));
+  }
+
+  @Test
+  void getUserFollowing_issuesSingleBatchQuery_notOnePerUser() throws Exception {
+    UserCollection u2 = new UserCollection();
+    u2.setId(SOMEONE_ELSE);
+    when(userRepository.findAllById(any())).thenReturn(List.of(u2));
+
+    mockMvc.perform(post("/api/user/getUserFollow")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content("{\"list\":[\"user-2\",\"user-3\"]}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(1));
+
+    verify(userRepository).findAllById(List.of("user-2", "user-3"));
+    verify(userRepository, never()).findUserCollectionById(anyString());
   }
 }

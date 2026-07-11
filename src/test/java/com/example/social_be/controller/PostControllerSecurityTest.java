@@ -15,12 +15,17 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,6 +37,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -118,5 +124,22 @@ class PostControllerSecurityTest {
     ArgumentCaptor<PostCollection> captor = ArgumentCaptor.forClass(PostCollection.class);
     verify(postRepository).save(captor.capture());
     assertThat(captor.getValue().getLike()).containsExactly(ME);
+  }
+
+  @Test
+  void getUserFollowing_issuesSingleBatchQuery_notOnePerUser() throws Exception {
+    when(postRepository.findByUserIdIn(any(), any(Pageable.class)))
+        .thenReturn(new PageImpl<>(List.of(postOwnedBy("user-3"))));
+
+    mockMvc.perform(post("/api/post/all-post-user-following")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content("{\"list\":[\"user-2\",\"user-3\",\"user-4\"]}"))
+        .andExpect(status().isOk());
+
+    @SuppressWarnings("unchecked")
+    ArgumentCaptor<Collection<String>> idsCaptor = ArgumentCaptor.forClass(Collection.class);
+    verify(postRepository).findByUserIdIn(idsCaptor.capture(), any(Pageable.class));
+    assertThat(idsCaptor.getValue()).containsExactly("user-2", "user-3", "user-4");
+    verify(postRepository, never()).findAllByUserId(anyString());
   }
 }

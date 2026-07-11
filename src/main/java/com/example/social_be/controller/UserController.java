@@ -23,9 +23,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @RestController
 @RequestMapping(value = "/api/user")
@@ -83,10 +83,10 @@ public class UserController {
 
   @PostMapping("/getUserFollow")
   public ResponseEntity<?> getUserFollowing(@Valid @RequestBody RequestList following) {
-    List<UserResponse> userFollowing = new ArrayList<>();
-    for (String id : following.getList()) {
-      userFollowing.add(new UserResponse(userRepository.findUserCollectionById(id)));
-    }
+    List<UserResponse> userFollowing = StreamSupport
+        .stream(userRepository.findAllById(following.getList()).spliterator(), false)
+        .map(UserResponse::new)
+        .collect(Collectors.toList());
     return ResponseEntity.ok(userFollowing);
   }
 

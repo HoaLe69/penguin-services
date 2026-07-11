@@ -13,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.mongodb.core.query.Query;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -41,15 +40,8 @@ public class ConversationController {
 
   @GetMapping("/all/{id}")
   public ResponseEntity<?> getAllRoomConversation(@PathVariable String id) {
-    List<ConversationCollection> rooms = conversationRepository.findAll();
-    List<ConversationCollection> roomRes = new ArrayList<>();
-    for (ConversationCollection room : rooms) {
-      String idMemberFirst = room.getMember().get(0);
-      String idMemberSecond = room.getMember().get(1);
-      if (idMemberFirst.equals(id) || idMemberSecond.equals(id))
-        roomRes.add(room);
-    }
-    return ResponseEntity.ok(roomRes);
+    List<ConversationCollection> rooms = conversationRepository.findByMemberContaining(id);
+    return ResponseEntity.ok(rooms);
   }
 
   @PatchMapping("/update/lastestMessage/{id}")
