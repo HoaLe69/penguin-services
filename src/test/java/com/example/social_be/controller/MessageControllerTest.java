@@ -1,5 +1,6 @@
 package com.example.social_be.controller;
 
+import com.example.social_be.exception.GlobalExceptionHandler;
 import com.example.social_be.model.collection.MessageCollection;
 import com.example.social_be.repository.MessageRepository;
 import com.example.social_be.service.MessageService;
@@ -40,7 +41,9 @@ class MessageControllerTest {
     controller = new MessageController();
     ReflectionTestUtils.setField(controller, "messageService", messageService);
 
-    mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+    mockMvc = MockMvcBuilders.standaloneSetup(controller)
+        .setControllerAdvice(new GlobalExceptionHandler())
+        .build();
   }
 
   @Test
@@ -60,7 +63,8 @@ class MessageControllerTest {
     when(messageRepository.findMessageCollectionById("missing")).thenReturn(null);
 
     mockMvc.perform(patch("/api/message/recall/missing"))
-        .andExpect(status().isBadRequest());
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
 
     verify(messageRepository, never()).save(any());
   }
