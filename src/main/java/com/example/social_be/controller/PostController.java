@@ -20,13 +20,15 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/api/post")
 public class PostController {
+  // Matches the page size already used by getAllPost, for consistency.
+  private static final int FEED_PAGE_SIZE = 2;
+
   @Autowired
   private CloudinaryServiceImpl cloudinary;
   @Autowired
@@ -85,12 +87,10 @@ public class PostController {
   }
 
   @PostMapping("/all-post-user-following")
-  public ResponseEntity<?> getUserFollowing(@Valid @RequestBody RequestList list) {
-    List<PostCollection> listPost = new ArrayList<>();
-    for (String userId : list.getList()) {
-      listPost.addAll(postRepository.findAllByUserId(userId));
-    }
-    return ResponseEntity.ok(listPost);
+  public ResponseEntity<?> getUserFollowing(@Valid @RequestBody RequestList list,
+      @RequestParam(defaultValue = "0") int page) {
+    Pageable pageable = PageRequest.of(page, FEED_PAGE_SIZE, Sort.by("createAt").descending());
+    return ResponseEntity.ok(postRepository.findByUserIdIn(list.getList(), pageable));
   }
 
   // get all post
