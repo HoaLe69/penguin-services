@@ -9,6 +9,7 @@ import com.example.social_be.repository.CommentRepository;
 import com.example.social_be.repository.PostRepository;
 import com.example.social_be.security.SecurityUtils;
 import com.example.social_be.service.CloudinaryServiceImpl;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -89,16 +90,12 @@ public class PostController {
   }
 
   @PostMapping("/all-post-user-following")
-  public ResponseEntity<?> getUserFollowing(@RequestBody RequestList list) {
-    if (list.getList() != null) {
-      List<PostCollection> listPost = new ArrayList<>();
-      for (int i = 0; i < list.getList().size(); i++) {
-        List<PostCollection> postsFromUser = (postRepository.findAllByUserId((String) list.getList().get(i)));
-        listPost.addAll(postsFromUser);
-      }
-      return ResponseEntity.ok(listPost);
+  public ResponseEntity<?> getUserFollowing(@Valid @RequestBody RequestList list) {
+    List<PostCollection> listPost = new ArrayList<>();
+    for (String userId : list.getList()) {
+      listPost.addAll(postRepository.findAllByUserId(userId));
     }
-    return ResponseEntity.badRequest().body("list is empty");
+    return ResponseEntity.ok(listPost);
   }
 
   // get all post

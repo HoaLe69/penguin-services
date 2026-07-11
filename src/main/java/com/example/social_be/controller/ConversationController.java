@@ -4,6 +4,7 @@ import com.example.social_be.model.collection.ConversationCollection;
 import com.example.social_be.model.request.ConversationRequest;
 import com.example.social_be.model.response.MessageResponse;
 import com.example.social_be.repository.ConversationRepository;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -23,7 +24,7 @@ public class ConversationController {
   private MongoTemplate mongoTemplate;
 
   @PostMapping("/create")
-  public ResponseEntity<?> createConversation(@RequestBody ConversationRequest conversationRequest) {
+  public ResponseEntity<?> createConversation(@Valid @RequestBody ConversationRequest conversationRequest) {
     try {
       ConversationCollection conversationCollection = new ConversationCollection(conversationRequest.getMember());
       ConversationCollection savedConversation = conversationRepository.save(conversationCollection);
