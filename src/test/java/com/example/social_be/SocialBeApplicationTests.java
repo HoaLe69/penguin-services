@@ -1,10 +1,8 @@
 package com.example.social_be;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
-class SocialBeApplicationTests {
+class SocialBeApplicationTests extends AbstractIntegrationTest {
 
     @Test
     void contextLoads() {
