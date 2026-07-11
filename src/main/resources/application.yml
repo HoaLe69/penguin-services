@@ -2,6 +2,15 @@
 # Mongo, mail) have no defaults here on purpose — they must come from env
 # vars or a local (gitignored) application.properties, so a missing value
 # fails startup loudly instead of silently falling back to something wrong.
+spring:
+  data:
+    mongodb:
+      # Create/update @Indexed/@CompoundIndex-declared indexes on startup.
+      # If the users/posts/comments/messages/room collections already have
+      # data that violates a new unique index (userName, socialId), index
+      # creation will fail loudly at boot rather than silently skip it.
+      auto-index-creation: true
+
 social-app:
   cookie:
     secure: true

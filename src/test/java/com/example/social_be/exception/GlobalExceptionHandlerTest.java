@@ -2,6 +2,7 @@ package com.example.social_be.exception;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.test.web.servlet.MockMvc;
@@ -68,6 +69,13 @@ class GlobalExceptionHandlerTest {
   }
 
   @Test
+  void duplicateKey_maps_to_409() throws Exception {
+    mockMvc.perform(get("/test/duplicate-key"))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.code").value("CONFLICT"));
+  }
+
+  @Test
   void unexpected_maps_to_500_without_leaking_detail() throws Exception {
     mockMvc.perform(get("/test/boom"))
         .andExpect(status().isInternalServerError())
@@ -100,6 +108,11 @@ class GlobalExceptionHandlerTest {
     @GetMapping("/test/bad-request")
     void badRequest() {
       throw new IllegalArgumentException("invalid input");
+    }
+
+    @GetMapping("/test/duplicate-key")
+    void duplicateKey() {
+      throw new DuplicateKeyException("E11000 duplicate key error");
     }
 
     @GetMapping("/test/boom")

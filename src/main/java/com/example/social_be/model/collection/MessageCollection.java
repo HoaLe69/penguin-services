@@ -7,8 +7,13 @@ import lombok.NoArgsConstructor;
 
 import java.util.Date;
 
+import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+// Backs MessageRepository.findAllByConversationId, so message-list lookups
+// don't collection-scan; also orders by createAt for when the currently
+// unused sorted/paged overload gets wired up.
+@CompoundIndex(name = "conversationId_createAt_idx", def = "{'conversationId': 1, 'createAt': -1}")
 @Document(value = "messages")
 @Data
 @AllArgsConstructor
