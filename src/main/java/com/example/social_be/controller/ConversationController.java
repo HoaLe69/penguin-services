@@ -1,5 +1,6 @@
 package com.example.social_be.controller;
 
+import com.example.social_be.exception.ResourceNotFoundException;
 import com.example.social_be.model.collection.ConversationCollection;
 import com.example.social_be.model.request.ConversationRequest;
 import com.example.social_be.model.response.MessageResponse;
@@ -25,13 +26,9 @@ public class ConversationController {
 
   @PostMapping("/create")
   public ResponseEntity<?> createConversation(@Valid @RequestBody ConversationRequest conversationRequest) {
-    try {
-      ConversationCollection conversationCollection = new ConversationCollection(conversationRequest.getMember());
-      ConversationCollection savedConversation = conversationRepository.save(conversationCollection);
-      return ResponseEntity.ok(savedConversation);
-    } catch (Exception ex) {
-      return ResponseEntity.badRequest().body(new MessageResponse("Something wrong"));
-    }
+    ConversationCollection conversationCollection = new ConversationCollection(conversationRequest.getMember());
+    ConversationCollection savedConversation = conversationRepository.save(conversationCollection);
+    return ResponseEntity.ok(savedConversation);
   }
 
   @GetMapping("/find/{senderId}/{receiveId}")
@@ -59,6 +56,8 @@ public class ConversationController {
   public ResponseEntity<?> updateLastestMessage(@PathVariable String id,
       @RequestBody ConversationCollection conversation) {
     ConversationCollection conversationCollection = conversationRepository.findConversationCollectionById(id);
+    if (conversationCollection == null)
+      throw ResourceNotFoundException.of("Conversation", id);
     conversationCollection.setLastestMessage(conversation.getLastestMessage());
     conversationRepository.save(conversationCollection);
     return ResponseEntity.ok(new MessageResponse("ok"));

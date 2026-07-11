@@ -182,4 +182,26 @@ class UserControllerSecurityTest {
     verify(userRepository).findByLikeEmail(anyString(), pageableCaptor.capture());
     assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(3);
   }
+
+  @Test
+  void getUserById_notFound_returns404() throws Exception {
+    when(userRepository.findUserCollectionById("missing")).thenReturn(null);
+
+    mockMvc.perform(get("/api/user/missing"))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+  }
+
+  @Test
+  void update_userDoesNotExist_returns404() throws Exception {
+    when(userRepository.findUserCollectionById(ME)).thenReturn(null);
+
+    mockMvc.perform(patch("/api/user/update/" + ME)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content("{\"about\":\"my new bio\"}"))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+
+    verify(userRepository, never()).save(any(UserCollection.class));
+  }
 }
