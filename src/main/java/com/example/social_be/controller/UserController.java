@@ -19,9 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -102,8 +100,6 @@ public class UserController {
 
   // update user by id
   @PatchMapping("/update/{id}")
-  @Transactional
-  @Async
   public ResponseEntity<?> updateUser(@Valid @RequestBody UserUpdateRequest update, @PathVariable String id) {
     SecurityUtils.requireSelf(id);
     try {
@@ -127,8 +123,11 @@ public class UserController {
   }
 
   // follow and unfollow
+  // NOTE: this updates two user documents (follower/following on each side);
+  // it's a good candidate to wrap in a real transaction once Mongo is
+  // configured as a replica set (REF-20) - @Transactional was removed here
+  // because on a standalone Mongo instance it silently does nothing.
   @PatchMapping("/interactive/{visiter}")
-  @Transactional
   public ResponseEntity<?> interactiveUser(@PathVariable String visiter) {
     String currentId = SecurityUtils.currentUserId();
     if (!currentId.equals(visiter)) {

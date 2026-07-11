@@ -15,12 +15,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -42,8 +40,6 @@ public class AuthController {
   private CookieService cookieService;
 
   @PostMapping("/login")
-  @Transactional
-  @Async
   public ResponseEntity<?> login(@Valid @RequestBody AuthLoginRequest authLoginRequest, HttpServletResponse response) {
     UserCollection userCheck = userRepository.findUserCollectionByUserName(authLoginRequest.getUserName());
     if (userCheck == null)
