@@ -7,12 +7,17 @@ import lombok.Data;
 import lombok.extern.jackson.Jacksonized;
 
 import org.apache.commons.lang3.ObjectUtils.Null;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+// Backs the followed-users feed (PostRepository.findByUserIdIn, sorted by
+// createAt desc) and the all-posts feed (findAll(Pageable) sorted the same
+// way) with a single index instead of a collection scan.
+@CompoundIndex(name = "userId_createAt_idx", def = "{'userId': 1, 'createAt': -1}")
 @Document(value = "posts")
 @Data
 @AllArgsConstructor

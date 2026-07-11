@@ -29,7 +29,7 @@ CI: `.github/workflows/main_penguin-apis.yml` builds and deploys to Azure Web Ap
 
 `src/main/resources/application.properties` is **gitignored** and must be created locally (or set the equivalent env vars — see `docker-compose.yml` / `.env.example`). App-specific config is a single typed, validated `@ConfigurationProperties` bean (`config/SocialAppProperties`) under the `social-app.*` prefix; a missing/blank/too-short required value fails startup with a field-by-field validation error instead of an obscure `@Value` resolution failure:
 
-- Mongo: `spring.data.mongodb.*` (standard Spring Data Mongo connection properties, not part of `SocialAppProperties`)
+- Mongo: `spring.data.mongodb.*` (standard Spring Data Mongo connection properties, not part of `SocialAppProperties`). `application.yml` sets `spring.data.mongodb.auto-index-creation: true`, so every `@Indexed`/`@CompoundIndex` on a `model/collection/*` class is created/updated on boot — including a `unique` index on `UserCollection.userName` (and a sparse-unique one on `socialId`), so a collection with pre-existing duplicates will fail to start until they're cleaned up.
 - Cloudinary: `social-app.cloudinary.cloud-name`, `social-app.cloudinary.cloud-api-key`, `social-app.cloudinary.cloud-secret-key`
 - JWT: `social-app.jwt.secret`, `social-app.jwt.refresh-secret` (each must be **≥ 64 characters** — HS512 needs a 512-bit key, see `JwtTokenUtil`), `social-app.jwt.access-ttl`, `social-app.jwt.refresh-ttl` (seconds)
 - CORS: `social-app.cors.allowed-origins` (list; feeds both `CorsConfig` and the WebSocket allowed origins in `WebSocketConfig`)

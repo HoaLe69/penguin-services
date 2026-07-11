@@ -4,6 +4,7 @@ import com.example.social_be.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -55,6 +56,15 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(IllegalArgumentException.class)
   public ResponseEntity<ErrorResponse> handleBadRequest(IllegalArgumentException ex, HttpServletRequest req) {
     return build(HttpStatus.BAD_REQUEST, "BAD_REQUEST", ex.getMessage(), req);
+  }
+
+  // Backstop for the unique indexes on UserCollection.userName/socialId: the
+  // app-level check-then-insert in AuthController isn't atomic, so a
+  // concurrent registration can still race past it and hit the DB
+  // constraint. Surface it as a normal conflict, not a generic 500.
+  @ExceptionHandler(DuplicateKeyException.class)
+  public ResponseEntity<ErrorResponse> handleDuplicateKey(DuplicateKeyException ex, HttpServletRequest req) {
+    return build(HttpStatus.CONFLICT, "CONFLICT", "That value is already taken", req);
   }
 
   @ExceptionHandler(Exception.class)

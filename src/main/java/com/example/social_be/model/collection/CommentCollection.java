@@ -4,12 +4,16 @@ import com.example.social_be.util.Utilties;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Date;
 
+// Backs CommentRepository.findAllByPostId(id, Pageable), sorted by
+// createAt desc (see CommentController.getAllComment).
+@CompoundIndex(name = "postId_createAt_idx", def = "{'postId': 1, 'createAt': -1}")
 @Document("comment")
 @Data
 @AllArgsConstructor

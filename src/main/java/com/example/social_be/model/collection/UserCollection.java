@@ -17,8 +17,12 @@ import java.util.List;
 @AllArgsConstructor
 public class UserCollection {
   private String id;
+  // sparse: most users don't have a socialId (only Google-login accounts
+  // do), and a plain unique index would treat every null as a duplicate.
   @JsonIgnore
+  @Indexed(unique = true, sparse = true)
   private String socialId;
+  @Indexed(unique = true)
   private String userName;
   @JsonIgnore
   private String password;

@@ -4,6 +4,7 @@ import com.example.social_be.util.Utilties;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
@@ -14,6 +15,9 @@ import java.util.List;
 @NoArgsConstructor
 public class ConversationCollection {
   private String id;
+  // Backs ConversationRepository.findByMemberContaining - a multikey index
+  // (Mongo indexes each array element) instead of a full collection scan.
+  @Indexed
   private List<String> member;
   private String lastestMessage;
   private String createAt;
