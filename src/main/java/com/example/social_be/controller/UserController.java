@@ -16,6 +16,10 @@ import com.example.social_be.util.Utilties;
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +48,9 @@ public class UserController {
 
   @Autowired
   private CommentRepository commentRepository;
+
+  @Autowired
+  private MongoTemplate mongoTemplate;
 
   @GetMapping("/search")
   public ResponseEntity<?> searchUser(@RequestParam String email) {
@@ -111,42 +118,42 @@ public class UserController {
   }
 
   // follow and unfollow
-  // NOTE: this updates two user documents (follower/following on each side);
-  // it's a good candidate to wrap in a real transaction once Mongo is
-  // configured as a replica set (REF-20) - @Transactional was removed here
-  // because on a standalone Mongo instance it silently does nothing.
+  // This updates two user documents (follower/following on each side).
+  // REF-20 decision: Mongo here is a standalone instance, not a replica set,
+  // so multi-document @Transactional would be a silent no-op (worse than not
+  // having it, since it looks safe but isn't) - not worth standing up a
+  // replica set just for this one call site before the service layer
+  // (REF-13) exists to scope transactions properly. Instead, each side is
+  // updated with an atomic single-document $addToSet/$pull instead of a
+  // read-modify-save of the whole document, which removes the lost-update
+  // race (two concurrent requests overwriting each other's array changes)
+  // even though the two documents still aren't updated as a single unit.
   @PatchMapping("/interactive/{visiter}")
   public ResponseEntity<?> interactiveUser(@PathVariable String visiter) {
     String currentId = SecurityUtils.currentUserId();
-    if (!currentId.equals(visiter)) {
-      UserCollection currentUser = userRepository.findUserCollectionById(currentId);
-      UserCollection userFollow = userRepository.findUserCollectionById(visiter);
-
-      // list following of user login
-      List<String> listFollowing = currentUser.getFollowing();
-      // list follower of visiter
-      List<String> listFollower = userFollow.getFollower();
-      if (!listFollowing.contains(visiter)) {
-        // follow
-        listFollowing.add(visiter);
-        currentUser.setFollowing(listFollowing);
-        userRepository.save(currentUser);
-        listFollower.add(currentId);
-        userFollow.setFollower(listFollower);
-        userRepository.save(userFollow);
-        return ResponseEntity.ok(new UserResponse(userFollow));
-      } else {
-        // unfolllow
-        listFollowing.remove(visiter);
-        currentUser.setFollowing(listFollowing);
-        userRepository.save(currentUser);
-        listFollower.remove(currentId);
-        userFollow.setFollower(listFollower);
-        userRepository.save(userFollow);
-        return ResponseEntity.ok(new UserResponse(userFollow));
-      }
-    } else {
+    if (currentId.equals(visiter)) {
       return ResponseEntity.badRequest().body(new MessageResponse("You can't not follow yourself!!!"));
     }
+
+    UserCollection currentUser = userRepository.findUserCollectionById(currentId);
+    UserCollection userFollow = userRepository.findUserCollectionById(visiter);
+    if (currentUser == null)
+      throw ResourceNotFoundException.of("User", currentId);
+    if (userFollow == null)
+      throw ResourceNotFoundException.of("User", visiter);
+
+    boolean alreadyFollowing = currentUser.getFollowing() != null && currentUser.getFollowing().contains(visiter);
+    Update currentUserUpdate = alreadyFollowing
+        ? new Update().pull("following", visiter)
+        : new Update().addToSet("following", visiter);
+    Update targetUpdate = alreadyFollowing
+        ? new Update().pull("follower", currentId)
+        : new Update().addToSet("follower", currentId);
+
+    mongoTemplate.updateFirst(Query.query(Criteria.where("id").is(currentId)), currentUserUpdate, UserCollection.class);
+    mongoTemplate.updateFirst(Query.query(Criteria.where("id").is(visiter)), targetUpdate, UserCollection.class);
+
+    UserCollection updatedTarget = userRepository.findUserCollectionById(visiter);
+    return ResponseEntity.ok(new UserResponse(updatedTarget));
   }
 }

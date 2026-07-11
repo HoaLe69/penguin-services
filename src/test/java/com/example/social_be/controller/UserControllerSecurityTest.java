@@ -15,6 +15,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,6 +30,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -48,6 +52,8 @@ class UserControllerSecurityTest {
   private PostRepository postRepository;
   @Mock
   private CommentRepository commentRepository;
+  @Mock
+  private MongoTemplate mongoTemplate;
   @InjectMocks
   private UserController controller;
 
@@ -220,5 +226,67 @@ class UserControllerSecurityTest {
 
     verify(userRepository).findAllById(List.of("user-2", "user-3"));
     verify(userRepository, never()).findUserCollectionById(anyString());
+  }
+
+  @Test
+  void interactiveUser_self_isBadRequest() throws Exception {
+    mockMvc.perform(patch("/api/user/interactive/" + ME))
+        .andExpect(status().isBadRequest());
+
+    verify(userRepository, never()).findUserCollectionById(anyString());
+  }
+
+  @Test
+  void interactiveUser_currentUserMissing_returns404() throws Exception {
+    when(userRepository.findUserCollectionById(ME)).thenReturn(null);
+
+    mockMvc.perform(patch("/api/user/interactive/" + SOMEONE_ELSE))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+
+    verify(mongoTemplate, never()).updateFirst(any(Query.class), any(Update.class), eq(UserCollection.class));
+  }
+
+  @Test
+  void interactiveUser_follow_usesAtomicAddToSet_onBothSides() throws Exception {
+    UserCollection me = new UserCollection();
+    me.setId(ME);
+    me.setFollowing(List.of());
+    UserCollection target = new UserCollection();
+    target.setId(SOMEONE_ELSE);
+    when(userRepository.findUserCollectionById(ME)).thenReturn(me);
+    when(userRepository.findUserCollectionById(SOMEONE_ELSE)).thenReturn(target);
+
+    mockMvc.perform(patch("/api/user/interactive/" + SOMEONE_ELSE))
+        .andExpect(status().isOk());
+
+    ArgumentCaptor<Update> updateCaptor = ArgumentCaptor.forClass(Update.class);
+    verify(mongoTemplate, org.mockito.Mockito.times(2))
+        .updateFirst(any(Query.class), updateCaptor.capture(), eq(UserCollection.class));
+    List<Update> updates = updateCaptor.getAllValues();
+    assertThat(updates.get(0).getUpdateObject().toString()).contains("$addToSet");
+    assertThat(updates.get(1).getUpdateObject().toString()).contains("$addToSet");
+    verify(userRepository, never()).save(any(UserCollection.class));
+  }
+
+  @Test
+  void interactiveUser_unfollow_usesAtomicPull_onBothSides() throws Exception {
+    UserCollection me = new UserCollection();
+    me.setId(ME);
+    me.setFollowing(List.of(SOMEONE_ELSE));
+    UserCollection target = new UserCollection();
+    target.setId(SOMEONE_ELSE);
+    when(userRepository.findUserCollectionById(ME)).thenReturn(me);
+    when(userRepository.findUserCollectionById(SOMEONE_ELSE)).thenReturn(target);
+
+    mockMvc.perform(patch("/api/user/interactive/" + SOMEONE_ELSE))
+        .andExpect(status().isOk());
+
+    ArgumentCaptor<Update> updateCaptor = ArgumentCaptor.forClass(Update.class);
+    verify(mongoTemplate, org.mockito.Mockito.times(2))
+        .updateFirst(any(Query.class), updateCaptor.capture(), eq(UserCollection.class));
+    List<Update> updates = updateCaptor.getAllValues();
+    assertThat(updates.get(0).getUpdateObject().toString()).contains("$pull");
+    assertThat(updates.get(1).getUpdateObject().toString()).contains("$pull");
   }
 }
