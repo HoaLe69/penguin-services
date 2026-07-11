@@ -8,6 +8,8 @@ import com.example.social_be.model.response.CommentResponseSocket;
 import com.example.social_be.repository.CommentRepository;
 import com.example.social_be.repository.PostRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -19,6 +21,10 @@ public class CommentService {
   private CommentRepository commentRepository;
   @Autowired
   private PostRepository postRepository;
+
+  public Page<CommentCollection> getAllComment(String postId, Pageable pageable) {
+    return commentRepository.findAllByPostId(postId, pageable);
+  }
 
   public Object handleSocketComment(String postId, CommentRequestSocket commentRequest) {
     PostCollection storedPost = postRepository.findPostCollectionById(postId);

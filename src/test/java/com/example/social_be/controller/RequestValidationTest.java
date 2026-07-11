@@ -1,15 +1,14 @@
 package com.example.social_be.controller;
 
 import com.example.social_be.exception.GlobalExceptionHandler;
-import com.example.social_be.repository.ConversationRepository;
 import com.example.social_be.repository.UserRepository;
+import com.example.social_be.service.ConversationService;
 import com.example.social_be.util.CookieService;
 import com.example.social_be.util.JwtTokenUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -42,9 +41,7 @@ class RequestValidationTest {
   private CookieService cookieService;
 
   @Mock
-  private ConversationRepository conversationRepository;
-  @Mock
-  private MongoTemplate mongoTemplate;
+  private ConversationService conversationService;
 
   @Test
   void register_blankUsernameAndInvalidEmailAndShortPassword_returns400WithFieldErrors() throws Exception {
@@ -73,8 +70,7 @@ class RequestValidationTest {
   @Test
   void createConversation_withOneMember_returns400() throws Exception {
     ConversationController controller = new ConversationController();
-    setField(controller, "conversationRepository", conversationRepository);
-    setField(controller, "mongoTemplate", mongoTemplate);
+    setField(controller, "conversationService", conversationService);
     MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller)
         .setControllerAdvice(new GlobalExceptionHandler())
         .build();
@@ -86,7 +82,7 @@ class RequestValidationTest {
         .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
         .andExpect(jsonPath("$.fieldErrors.member").exists());
 
-    verify(conversationRepository, never()).save(org.mockito.ArgumentMatchers.any());
+    verify(conversationService, never()).createConversation(org.mockito.ArgumentMatchers.any());
   }
 
   private static void setField(Object target, String field, Object value) {
