@@ -43,7 +43,7 @@ public class AuthController {
   public ResponseEntity<?> login(@Valid @RequestBody AuthLoginRequest authLoginRequest, HttpServletResponse response) {
     UserCollection userCheck = userRepository.findUserCollectionByUserName(authLoginRequest.getUserName());
     if (userCheck == null)
-        return ResponseEntity.badRequest().body(new MessageResponse("Username không tồn tại!!!"));
+      throw new IllegalArgumentException("Username does not exist");
     // A wrong password throws BadCredentialsException here, which the
     // GlobalExceptionHandler maps to 401 (previously an unhandled 500).
     Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
@@ -56,7 +56,7 @@ public class AuthController {
         accessToken, jwtTokenUtil.getAccessTokenValiditySeconds(),
         refreshToken, jwtTokenUtil.getRefreshTokenValiditySeconds());
 
-    return ResponseEntity.ok("Login Successfully!");
+    return ResponseEntity.ok(new MessageResponse("Login successfully"));
   }
 
   @PostMapping("/loginWithSocial")
@@ -80,31 +80,29 @@ public class AuthController {
         accessToken, jwtTokenUtil.getAccessTokenValiditySeconds(),
         refreshToken, jwtTokenUtil.getRefreshTokenValiditySeconds());
 
-    return ResponseEntity.ok("ok");
+    return ResponseEntity.ok(new MessageResponse("ok"));
   }
 
   @GetMapping("/log-out/{name}")
   public ResponseEntity<?> logOut(@PathVariable String name, HttpServletResponse response) {
     cookieService.clearAuthCookies(response);
-    return ResponseEntity.ok("ok");
+    return ResponseEntity.ok(new MessageResponse("ok"));
   }
 
   @PostMapping("/register")
   public ResponseEntity<?> register(@Valid @RequestBody AuthSignUpRequest authSignUpRequest) {
     UserCollection user = userRepository.findUserCollectionByUserName(authSignUpRequest.getUserName());
-    if (user == null) {
-      String pass = encoder.encode(authSignUpRequest.getPassword());
-      authSignUpRequest.setPassword(pass);
-      UserCollection userCollection = new UserCollection(authSignUpRequest);
-      userRepository.save(userCollection);
-      return ResponseEntity.ok(new MessageResponse("Register successfully"));
-    }
-    return ResponseEntity.badRequest().body(new MessageResponse("Username is exiting"));
+    if (user != null)
+      throw new IllegalArgumentException("Username already exists");
+    String pass = encoder.encode(authSignUpRequest.getPassword());
+    authSignUpRequest.setPassword(pass);
+    UserCollection userCollection = new UserCollection(authSignUpRequest);
+    userRepository.save(userCollection);
+    return ResponseEntity.ok(new MessageResponse("Register successfully"));
   }
 
   @PostMapping("/refresh-token")
   public ResponseEntity<?> refreshToken(@CookieValue("refreshToken") String token, HttpServletResponse response) {
-    // return ResponseEntity.badRequest().body(new MessageResponse(token));
     if (StringUtils.hasText(token)) {
       String userName = jwtTokenUtil.getUserNameFromRefreshToken(token);
       UserCollection userCollection = userRepository.findUserCollectionByUserName(userName);
@@ -116,9 +114,8 @@ public class AuthController {
             refreshToken, jwtTokenUtil.getRefreshTokenValiditySeconds());
         return ResponseEntity.ok(new JwtResponse(accessToken, refreshToken));
       }
-      return ResponseEntity.badRequest().body(new MessageResponse("You are not authenticated"));
     }
-    return ResponseEntity.badRequest().body(new MessageResponse("You are not Authenticated"));
+    throw new IllegalArgumentException("You are not authenticated");
   }
 
 }

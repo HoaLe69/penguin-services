@@ -228,7 +228,8 @@ class UserControllerSecurityTest {
   @Test
   void interactiveUser_self_isBadRequest() throws Exception {
     mockMvc.perform(patch("/api/user/interactive/" + ME))
-        .andExpect(status().isBadRequest());
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
 
     verify(userRepository, never()).findUserCollectionById(anyString());
   }

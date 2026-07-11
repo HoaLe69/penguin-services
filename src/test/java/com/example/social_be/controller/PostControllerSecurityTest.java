@@ -138,6 +138,17 @@ class PostControllerSecurityTest {
   }
 
   @Test
+  void react_postRemoved_isBadRequest() throws Exception {
+    when(postRepository.findPostCollectionById("p1")).thenReturn(null);
+
+    mockMvc.perform(patch("/api/post/react/p1"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
+
+    verify(postRepository, never()).save(any());
+  }
+
+  @Test
   void getUserFollowing_issuesSingleBatchQuery_notOnePerUser() throws Exception {
     when(postRepository.findByUserIdIn(any(), any(Pageable.class)))
         .thenReturn(new PageImpl<>(List.of(postOwnedBy("user-3"))));

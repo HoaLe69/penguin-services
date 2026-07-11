@@ -1,6 +1,7 @@
 package com.example.social_be.controller;
 
 import com.example.social_be.model.collection.MessageCollection;
+import com.example.social_be.model.response.MessageResponse;
 import com.example.social_be.service.MessageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -20,9 +21,9 @@ public class MessageController {
   @PatchMapping("/recall/{id}")
   public ResponseEntity<?> recallMessage(@PathVariable String id) {
     MessageCollection mess = messageService.recallMessage(id);
-    if (mess != null) {
-      return ResponseEntity.ok("ok");
+    if (mess == null) {
+      throw new IllegalArgumentException("Message not found");
     }
-    return ResponseEntity.badRequest().body("message not found");
+    return ResponseEntity.ok(new MessageResponse("ok"));
   }
 }

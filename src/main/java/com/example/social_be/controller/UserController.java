@@ -38,7 +38,7 @@ public class UserController {
           userDetail.getDisplayName(), userDetail.getAvatar(), userDetail.getAvatar(), userDetail.getFollower(),
           userDetail.getFollowing()));
     }
-    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User is not authenticated");
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new MessageResponse("User is not authenticated"));
   }
 
   @GetMapping("/{id}")
@@ -69,7 +69,7 @@ public class UserController {
   public ResponseEntity<?> interactiveUser(@PathVariable String visiter) {
     String currentId = SecurityUtils.currentUserId();
     if (currentId.equals(visiter)) {
-      return ResponseEntity.badRequest().body(new MessageResponse("You can't not follow yourself!!!"));
+      throw new IllegalArgumentException("You cannot follow yourself");
     }
     return ResponseEntity.ok(userService.interactiveUser(currentId, visiter));
   }

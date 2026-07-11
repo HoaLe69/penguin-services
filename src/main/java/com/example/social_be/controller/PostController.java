@@ -73,10 +73,10 @@ public class PostController {
   @PatchMapping("/react/{id}")
   public ResponseEntity<?> reactPost(@PathVariable String id) {
     String result = postService.reactPost(id);
-    if (result != null) {
-      return ResponseEntity.ok(result);
+    if (result == null) {
+      throw new IllegalArgumentException("This post removed by owner");
     }
-    return ResponseEntity.badRequest().body("This post removed by owner");
+    return ResponseEntity.ok(new MessageResponse(result));
   }
 
 }
