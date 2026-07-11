@@ -2,6 +2,7 @@ package com.example.social_be.service;
 
 import com.example.social_be.model.collection.MessageCollection;
 import com.example.social_be.model.request.MessageRequestSocket;
+import com.example.social_be.model.response.ChatMessageResponse;
 import com.example.social_be.model.response.MessageResponse;
 import com.example.social_be.repository.MessageRepository;
 import org.junit.jupiter.api.Test;
@@ -30,7 +31,7 @@ class MessageServiceTest {
     message.setId("m1");
     when(messageRepository.findAllByConversationId("conv-1")).thenReturn(java.util.List.of(message));
 
-    assertThat(messageService.getAllMessages("conv-1")).containsExactly(message);
+    assertThat(messageService.getAllMessages("conv-1")).containsExactly(new ChatMessageResponse(message));
   }
 
   @Test
@@ -61,8 +62,8 @@ class MessageServiceTest {
 
     Object result = messageService.handleSocketMessage("conv-1", request);
 
-    assertThat(result).isInstanceOf(MessageCollection.class);
-    MessageCollection saved = (MessageCollection) result;
+    assertThat(result).isInstanceOf(ChatMessageResponse.class);
+    ChatMessageResponse saved = (ChatMessageResponse) result;
     assertThat(saved.getContent()).isEqualTo("hello");
     assertThat(saved.getUserId()).isEqualTo("user-1");
     assertThat(saved.getConversationId()).isEqualTo("conv-1");

@@ -4,6 +4,7 @@ import com.example.social_be.exception.ForbiddenException;
 import com.example.social_be.exception.GlobalExceptionHandler;
 import com.example.social_be.model.collection.PostCollection;
 import com.example.social_be.model.custom.CustomUserDetail;
+import com.example.social_be.model.request.PostEditRequest;
 import com.example.social_be.repository.CommentRepository;
 import com.example.social_be.repository.PostRepository;
 import com.example.social_be.service.CloudinaryServiceImpl;
@@ -118,7 +119,7 @@ class PostControllerSecurityTest {
   void edit_someoneElsesPost_throws_forbidden() {
     when(postRepository.findPostCollectionById("p1")).thenReturn(postOwnedBy(SOMEONE_ELSE));
 
-    assertThatThrownBy(() -> controller.edit(null, new PostCollection(), "p1", "cloud1"))
+    assertThatThrownBy(() -> controller.edit(null, new PostEditRequest(), "p1", "cloud1"))
         .isInstanceOf(ForbiddenException.class);
   }
 
