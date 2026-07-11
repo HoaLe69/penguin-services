@@ -1,11 +1,16 @@
 package com.example.social_be.model.request;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
 public class AuthLoginGoogleRequest {
+  @NotBlank
+  @Email
   private String email;
   private String given_name;
+  @NotBlank
   private String id;
   private String name;
   private String picture;

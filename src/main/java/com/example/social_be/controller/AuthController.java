@@ -12,6 +12,7 @@ import com.example.social_be.util.JwtTokenUtil;
 import com.example.social_be.util.Utilties;
 
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
@@ -43,7 +44,7 @@ public class AuthController {
   @PostMapping("/login")
   @Transactional
   @Async
-  public ResponseEntity<?> login(@RequestBody AuthLoginRequest authLoginRequest, HttpServletResponse response) {
+  public ResponseEntity<?> login(@Valid @RequestBody AuthLoginRequest authLoginRequest, HttpServletResponse response) {
     UserCollection userCheck = userRepository.findUserCollectionByUserName(authLoginRequest.getUserName());
     if (userCheck == null)
         return ResponseEntity.badRequest().body(new MessageResponse("Username không tồn tại!!!"));
@@ -63,7 +64,7 @@ public class AuthController {
   }
 
   @PostMapping("/loginWithSocial")
-  public ResponseEntity<?> loginWithSocial(@RequestBody AuthLoginGoogleRequest userInfo, HttpServletResponse response) {
+  public ResponseEntity<?> loginWithSocial(@Valid @RequestBody AuthLoginGoogleRequest userInfo, HttpServletResponse response) {
     UserCollection storedUser = userRepository.findUserCollectionBySocialId(userInfo.getId());
     String username = Utilties.extractUsername(userInfo.getEmail());
 
@@ -93,7 +94,7 @@ public class AuthController {
   }
 
   @PostMapping("/register")
-  public ResponseEntity<?> register(@RequestBody AuthSignUpRequest authSignUpRequest) {
+  public ResponseEntity<?> register(@Valid @RequestBody AuthSignUpRequest authSignUpRequest) {
     UserCollection user = userRepository.findUserCollectionByUserName(authSignUpRequest.getUserName());
     if (user == null) {
       String pass = encoder.encode(authSignUpRequest.getPassword());

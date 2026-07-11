@@ -12,6 +12,7 @@ import com.example.social_be.repository.UserRepository;
 import com.example.social_be.security.SecurityUtils;
 import com.example.social_be.util.Utilties;
 
+import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -91,22 +92,19 @@ public class UserController {
   }
 
   @PostMapping("/getUserFollow")
-  public ResponseEntity<?> getUserFollowing(@RequestBody RequestList following) {
-    if (following.getList() != null) {
-      List<UserResponse> userFollowing = new ArrayList<>();
-      for (int i = 0; i < following.getList().size(); i++) {
-        userFollowing.add(new UserResponse(userRepository.findUserCollectionById((String) following.getList().get(i))));
-      }
-      return ResponseEntity.ok(userFollowing);
+  public ResponseEntity<?> getUserFollowing(@Valid @RequestBody RequestList following) {
+    List<UserResponse> userFollowing = new ArrayList<>();
+    for (String id : following.getList()) {
+      userFollowing.add(new UserResponse(userRepository.findUserCollectionById(id)));
     }
-    return ResponseEntity.badRequest().body(following);
+    return ResponseEntity.ok(userFollowing);
   }
 
   // update user by id
   @PatchMapping("/update/{id}")
   @Transactional
   @Async
-  public ResponseEntity<?> updateUser(@RequestBody UserUpdateRequest update, @PathVariable String id) {
+  public ResponseEntity<?> updateUser(@Valid @RequestBody UserUpdateRequest update, @PathVariable String id) {
     SecurityUtils.requireSelf(id);
     try {
       UserCollection user = userRepository.findUserCollectionById(id);
