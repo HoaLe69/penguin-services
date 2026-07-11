@@ -19,6 +19,22 @@ spring:
         max-page-size: 50
         one-indexed-parameters: false
 
+management:
+  endpoints:
+    web:
+      exposure:
+        # Only health/info over HTTP - not the full actuator surface (env,
+        # beans, etc.), which could leak config/internals if ever exposed
+        # by accident.
+        include: health, info
+  endpoint:
+    health:
+      # Include the Mongo (and other) health indicator details in the
+      # response body, not just a top-level "UP"/"DOWN" - the Docker/
+      # orchestrator healthcheck and anyone debugging a down instance both
+      # want to see *what's* unhealthy.
+      show-details: always
+
 social-app:
   cookie:
     secure: true
