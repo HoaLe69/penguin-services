@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/api/user")
@@ -44,7 +45,11 @@ public class UserController {
 
   @GetMapping("/search")
   public ResponseEntity<?> searchUser(@RequestParam String email) {
-    return ResponseEntity.ok(userRepository.findByLikeEmail(email).stream().limit(3));
+    List<UserResponse> results = userRepository.findByLikeEmail(email).stream()
+        .limit(3)
+        .map(UserResponse::new)
+        .collect(Collectors.toList());
+    return ResponseEntity.ok(results);
   }
 
   @GetMapping("/verify")
@@ -98,7 +103,7 @@ public class UserController {
         return ResponseEntity.badRequest().body("Invalid user id");
       user.setAbout(update.getAbout());
       UserCollection savedUser = userRepository.save(user);
-      return ResponseEntity.ok(savedUser);
+      return ResponseEntity.ok(new UserResponse(savedUser));
     } catch (Exception ex) {
       return ResponseEntity.badRequest().body(new MessageResponse("Something wrong"));
     }

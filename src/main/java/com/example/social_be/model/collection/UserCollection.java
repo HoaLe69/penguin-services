@@ -1,6 +1,7 @@
 package com.example.social_be.model.collection;
 
 import com.example.social_be.model.request.AuthSignUpRequest;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,8 +16,10 @@ import java.util.List;
 @AllArgsConstructor
 public class UserCollection {
   private String id;
+  @JsonIgnore
   private String socialId;
   private String userName;
+  @JsonIgnore
   private String password;
   private String email;
   private String displayName;

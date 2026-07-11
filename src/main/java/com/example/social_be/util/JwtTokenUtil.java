@@ -59,4 +59,12 @@ public class JwtTokenUtil {
   public String getUserNameFromRefreshToken(String token) {
     return this.getUserNameFromClamis(token, jwtSecretKeyRefresh);
   }
+
+  public long getAccessTokenValiditySeconds() {
+    return TOKEN_VALIDITY;
+  }
+
+  public long getRefreshTokenValiditySeconds() {
+    return TOKEN_VALIDITY_REFRESH;
+  }
 }

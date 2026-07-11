@@ -7,10 +7,9 @@ import com.example.social_be.model.request.AuthSignUpRequest;
 import com.example.social_be.model.response.JwtResponse;
 import com.example.social_be.model.response.MessageResponse;
 import com.example.social_be.repository.UserRepository;
-import com.example.social_be.util.AuthUtil;
+import com.example.social_be.util.CookieService;
 import com.example.social_be.util.JwtTokenUtil;
 import com.example.social_be.util.Utilties;
-import jakarta.servlet.http.Cookie;
 
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,11 +37,8 @@ public class AuthController {
   @Autowired
   private AuthenticationManager authenticationManager;
 
-  private AuthUtil authUtil;
-
-  public AuthController() {
-    authUtil = new AuthUtil();
-  }
+  @Autowired
+  private CookieService cookieService;
 
   @PostMapping("/login")
   @Transactional
@@ -59,18 +55,9 @@ public class AuthController {
     String accessToken = jwtTokenUtil.generateJwtAccessToken(authLoginRequest.getUserName());
     String refreshToken = jwtTokenUtil.generateJwtRefreshToken(authLoginRequest.getUserName());
 
-    Cookie accessTokenCookie = new Cookie("token", accessToken);
-    accessTokenCookie.setHttpOnly(true);
-    accessTokenCookie.setMaxAge(60 * 60 * 24);
-    accessTokenCookie.setPath("/");
-
-    Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
-    refreshTokenCookie.setHttpOnly(true);
-    refreshTokenCookie.setMaxAge(60 * 60 * 24 * 7);
-    refreshTokenCookie.setPath("/");
-    // add cookies to the response
-    response.addCookie(accessTokenCookie);
-    response.addCookie(refreshTokenCookie);
+    cookieService.attachAuthCookies(response,
+        accessToken, jwtTokenUtil.getAccessTokenValiditySeconds(),
+        refreshToken, jwtTokenUtil.getRefreshTokenValiditySeconds());
 
     return ResponseEntity.ok("Login Successfully!");
   }
@@ -92,45 +79,16 @@ public class AuthController {
     String accessToken = jwtTokenUtil.generateJwtAccessToken(username);
     String refreshToken = jwtTokenUtil.generateJwtRefreshToken(username);
 
-    // Cookie accessTokenCookie = new Cookie("token", accessToken);
-    // accessTokenCookie.setHttpOnly(true);
-    // accessTokenCookie.setDomain(".vercel.app");
-    // accessTokenCookie.setSecure(true); // cookies will only sent over HTTPS
-    // connections
-    // accessTokenCookie.setMaxAge(60 * 60 * 24 * 7);
-    // accessTokenCookie.setPath("/");
-    //
-    // Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
-    // refreshTokenCookie.setHttpOnly(true);
-    // refreshTokenCookie.setSecure(true);
-    // refreshTokenCookie.setDomain(".vercel.app");
-    // refreshTokenCookie.setMaxAge(60 * 60 * 24 * 7);
-    // refreshTokenCookie.setPath("/");
-    // //
-    // // add cookies to the response
-    // response.addCookie(accessTokenCookie);
-    // response.addCookie(refreshTokenCookie);
-
-    // authUtil.attachTokenInCookieResponse(response, accessToken, refreshToken);
-    authUtil.attachTokenInCookieResponse(response, accessToken, refreshToken);
+    cookieService.attachAuthCookies(response,
+        accessToken, jwtTokenUtil.getAccessTokenValiditySeconds(),
+        refreshToken, jwtTokenUtil.getRefreshTokenValiditySeconds());
 
     return ResponseEntity.ok("ok");
   }
 
   @GetMapping("/log-out/{name}")
   public ResponseEntity<?> logOut(@PathVariable String name, HttpServletResponse response) {
-    Cookie clearAccesstokenCookie = new Cookie("token", null);
-    clearAccesstokenCookie.setPath("/");
-    clearAccesstokenCookie.setMaxAge(0);
-
-    Cookie clearRefreshtokenCookie = new Cookie("refreshToken", null);
-    clearRefreshtokenCookie.setPath("/");
-    clearRefreshtokenCookie.setMaxAge(0);
-
-    // add cookies to the response
-    response.addCookie(clearAccesstokenCookie);
-    response.addCookie(clearRefreshtokenCookie);
-
+    cookieService.clearAuthCookies(response);
     return ResponseEntity.ok("ok");
   }
 
@@ -156,8 +114,9 @@ public class AuthController {
       if (userCollection != null && jwtTokenUtil.validateJwtRefreshToken(token, userName)) {
         String accessToken = jwtTokenUtil.generateJwtAccessToken(userName);
         String refreshToken = jwtTokenUtil.generateJwtRefreshToken(userName);
-        Cookie cookie = new Cookie("refreshToken", refreshToken);
-        response.addCookie(cookie);
+        cookieService.attachAuthCookies(response,
+            accessToken, jwtTokenUtil.getAccessTokenValiditySeconds(),
+            refreshToken, jwtTokenUtil.getRefreshTokenValiditySeconds());
         return ResponseEntity.ok(new JwtResponse(accessToken, refreshToken));
       }
       return ResponseEntity.badRequest().body(new MessageResponse("You are not authenticated"));

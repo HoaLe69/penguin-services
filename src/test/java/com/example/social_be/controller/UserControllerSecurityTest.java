@@ -28,6 +28,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -108,5 +109,38 @@ class UserControllerSecurityTest {
         .andExpect(status().isOk());
 
     verify(userRepository).deleteById(ME);
+  }
+
+  @Test
+  void update_response_excludes_password_and_socialId() throws Exception {
+    UserCollection me = new UserCollection();
+    me.setId(ME);
+    me.setSocialId("google-123");
+    me.setPassword("$2a$hashed");
+    when(userRepository.findUserCollectionById(ME)).thenReturn(me);
+    when(userRepository.save(any(UserCollection.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    mockMvc.perform(patch("/api/user/update/" + ME)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content("{\"about\":\"my new bio\"}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.password").doesNotExist())
+        .andExpect(jsonPath("$.socialId").doesNotExist());
+  }
+
+  @Test
+  void search_response_excludes_password_and_socialId() throws Exception {
+    UserCollection match = new UserCollection();
+    match.setId(SOMEONE_ELSE);
+    match.setEmail("someone@x.com");
+    match.setSocialId("google-456");
+    match.setPassword("$2a$hashed");
+    when(userRepository.findByLikeEmail(anyString())).thenReturn(List.of(match));
+
+    mockMvc.perform(get("/api/user/search").param("email", "someone"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].password").doesNotExist())
+        .andExpect(jsonPath("$[0].socialId").doesNotExist())
+        .andExpect(jsonPath("$[0].email").value("someone@x.com"));
   }
 }
