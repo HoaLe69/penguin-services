@@ -45,6 +45,7 @@ public class SecurityConfiguration {
             auth -> auth.requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/hi").permitAll()
                 .requestMatchers("/ws/**").permitAll()
+                .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info").permitAll()
                 .requestMatchers("/api/user/**").authenticated()
                 .requestMatchers("/api/post/**").authenticated()
                 .requestMatchers("/api/conversation/**").authenticated()

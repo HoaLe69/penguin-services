@@ -21,7 +21,7 @@ Use the Maven wrapper (`./mvnw` on Unix, `mvnw.cmd` on Windows).
 
 `docker compose up` starts Mongo (and the app, built from the local `Dockerfile`) with working dev defaults already wired — see `docker-compose.yml` / `.env.example` for the env vars it sets. `docker compose --profile tools up` also starts `mongo-express` on port 8081.
 
-`docker build -t social-be .` alone produces a multi-stage image (`mvn package -DskipTests`) that runs on port 8080. There is no Docker `HEALTHCHECK` yet and no `spring-boot-starter-actuator` dependency — `/actuator/health` does not exist in this codebase (see the Refactor Board's REF-21 ticket).
+`docker build -t social-be .` alone produces a multi-stage image (`mvn package -DskipTests`) that runs on port 8080, with a `HEALTHCHECK` hitting `/actuator/health` (public, permitted in `SecurityConfiguration`; includes a Mongo indicator via `spring-boot-starter-actuator`, `management.endpoint.health.show-details: always`). Only `health`/`info` are exposed over HTTP, not the full actuator surface.
 
 CI: `.github/workflows/main_penguin-apis.yml` builds and deploys to Azure Web App on push to `main`. It does not run tests as a PR gate (REF-23).
 
