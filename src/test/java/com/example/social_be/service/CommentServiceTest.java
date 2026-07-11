@@ -51,7 +51,7 @@ class CommentServiceTest {
     Page<CommentCollection> page = Page.empty();
     when(commentRepository.findAllByPostId(eq("post-1"), eq(pageable))).thenReturn(page);
 
-    assertThat(commentService.getAllComment("post-1", pageable)).isSameAs(page);
+    assertThat(commentService.getAllComment("post-1", pageable)).isEmpty();
   }
 
   @Test

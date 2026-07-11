@@ -4,6 +4,8 @@ import com.example.social_be.exception.ForbiddenException;
 import com.example.social_be.exception.ResourceNotFoundException;
 import com.example.social_be.model.collection.PostCollection;
 import com.example.social_be.model.custom.CustomUserDetail;
+import com.example.social_be.model.request.PostEditRequest;
+import com.example.social_be.model.response.PostResponse;
 import com.example.social_be.repository.CommentRepository;
 import com.example.social_be.repository.PostRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -70,35 +72,41 @@ class PostServiceTest {
     PostCollection post = postOwnedBy(ME);
     when(postRepository.findPostCollectionById("p1")).thenReturn(post);
 
-    assertThat(postService.getPostById("p1")).isEqualTo(post);
+    assertThat(postService.getPostById("p1")).isEqualTo(new PostResponse(post));
   }
 
   @Test
   void getAllPost_delegatesToRepository() {
     Pageable pageable = Pageable.unpaged();
-    Page<PostCollection> page = Page.empty();
+    PostCollection post = postOwnedBy(ME);
+    Page<PostCollection> page = new PageImpl<>(List.of(post));
     when(postRepository.findAll(pageable)).thenReturn(page);
 
-    assertThat(postService.getAllPost(pageable)).isSameAs(page);
+    assertThat(postService.getAllPost(pageable).getContent())
+        .containsExactly(new PostResponse(post));
   }
 
   @Test
   void getAllPostUser_delegatesToRepository() {
     Pageable pageable = Pageable.unpaged();
-    Page<PostCollection> page = new PageImpl<>(List.of(postOwnedBy(ME)));
+    PostCollection post = postOwnedBy(ME);
+    Page<PostCollection> page = new PageImpl<>(List.of(post));
     when(postRepository.findAllByUserId(ME, pageable)).thenReturn(page);
 
-    assertThat(postService.getAllPostUser(ME, pageable)).isSameAs(page);
+    assertThat(postService.getAllPostUser(ME, pageable).getContent())
+        .containsExactly(new PostResponse(post));
   }
 
   @Test
   void getUserFollowing_delegatesToRepository() {
     Pageable pageable = Pageable.unpaged();
     List<String> ids = List.of("a", "b");
-    Page<PostCollection> page = Page.empty();
+    PostCollection post = postOwnedBy(ME);
+    Page<PostCollection> page = new PageImpl<>(List.of(post));
     when(postRepository.findByUserIdIn(ids, pageable)).thenReturn(page);
 
-    assertThat(postService.getUserFollowing(ids, pageable)).isSameAs(page);
+    assertThat(postService.getUserFollowing(ids, pageable).getContent())
+        .containsExactly(new PostResponse(post));
   }
 
   @Test
@@ -134,7 +142,7 @@ class PostServiceTest {
   void edit_notFound_throwsResourceNotFound() {
     when(postRepository.findPostCollectionById("missing")).thenReturn(null);
 
-    assertThatThrownBy(() -> postService.edit(null, new PostCollection(), "missing", "cloud1"))
+    assertThatThrownBy(() -> postService.edit(null, new PostEditRequest(), "missing", "cloud1"))
         .isInstanceOf(ResourceNotFoundException.class);
   }
 
@@ -142,7 +150,7 @@ class PostServiceTest {
   void edit_notOwner_throwsForbidden() {
     when(postRepository.findPostCollectionById("p1")).thenReturn(postOwnedBy(SOMEONE_ELSE));
 
-    assertThatThrownBy(() -> postService.edit(null, new PostCollection(), "p1", "cloud1"))
+    assertThatThrownBy(() -> postService.edit(null, new PostEditRequest(), "p1", "cloud1"))
         .isInstanceOf(ForbiddenException.class);
   }
 
@@ -152,11 +160,11 @@ class PostServiceTest {
     when(postRepository.findPostCollectionById("p1")).thenReturn(stored);
     when(postRepository.save(any(PostCollection.class))).thenAnswer(inv -> inv.getArgument(0));
 
-    PostCollection edits = new PostCollection();
+    PostEditRequest edits = new PostEditRequest();
     edits.setDescription("new desc");
     edits.setTag("new tag");
 
-    PostCollection result = postService.edit(null, edits, "p1", "cloud1");
+    PostResponse result = postService.edit(null, edits, "p1", "cloud1");
 
     assertThat(result.getDescription()).isEqualTo("new desc");
     assertThat(result.getTag()).isEqualTo("new tag");

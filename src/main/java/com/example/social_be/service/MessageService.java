@@ -2,20 +2,24 @@ package com.example.social_be.service;
 
 import com.example.social_be.model.collection.MessageCollection;
 import com.example.social_be.model.request.MessageRequestSocket;
+import com.example.social_be.model.response.ChatMessageResponse;
 import com.example.social_be.model.response.MessageResponse;
 import com.example.social_be.repository.MessageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class MessageService {
   @Autowired
   private MessageRepository messageRepository;
 
-  public List<MessageCollection> getAllMessages(String conversationId) {
-    return messageRepository.findAllByConversationId(conversationId);
+  public List<ChatMessageResponse> getAllMessages(String conversationId) {
+    return messageRepository.findAllByConversationId(conversationId).stream()
+        .map(ChatMessageResponse::new)
+        .collect(Collectors.toList());
   }
 
   // Returns null when the message no longer exists so the controller can
@@ -33,6 +37,6 @@ public class MessageService {
       return new MessageResponse(message.getId());
     }
     MessageCollection savedMessage = new MessageCollection(message.getContent(), message.getUserId(), conversationId);
-    return messageRepository.save(savedMessage);
+    return new ChatMessageResponse(messageRepository.save(savedMessage));
   }
 }

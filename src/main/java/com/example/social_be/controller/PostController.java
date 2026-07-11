@@ -1,6 +1,7 @@
 package com.example.social_be.controller;
 
-import com.example.social_be.model.collection.PostCollection;
+import com.example.social_be.model.request.PostEditRequest;
+import com.example.social_be.model.request.PostUploadRequest;
 import com.example.social_be.model.request.RequestList;
 import com.example.social_be.model.response.MessageResponse;
 import com.example.social_be.service.PostService;
@@ -25,15 +26,15 @@ public class PostController {
   // create post
   @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<?> upload(@RequestPart(value = "file", required = false) MultipartFile multipartFile,
-      @RequestPart("formData") PostCollection postRequest) throws IOException {
+      @RequestPart("formData") PostUploadRequest postRequest) throws IOException {
     return ResponseEntity.ok(postService.upload(multipartFile, postRequest));
   }
 
   @PatchMapping(value = "/edit/{id}/{cloudId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<?> edit(@RequestPart(value = "file", required = false) MultipartFile multipartFile,
-      @RequestPart("formData") PostCollection postCollection, @PathVariable String id, @PathVariable String cloudId)
+      @RequestPart("formData") PostEditRequest postEditRequest, @PathVariable String id, @PathVariable String cloudId)
       throws IOException {
-    return ResponseEntity.ok(postService.edit(multipartFile, postCollection, id, cloudId));
+    return ResponseEntity.ok(postService.edit(multipartFile, postEditRequest, id, cloudId));
   }
 
   @PostMapping("/all-post-user-following")

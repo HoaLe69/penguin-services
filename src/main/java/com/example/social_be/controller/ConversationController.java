@@ -1,7 +1,7 @@
 package com.example.social_be.controller;
 
-import com.example.social_be.model.collection.ConversationCollection;
 import com.example.social_be.model.request.ConversationRequest;
+import com.example.social_be.model.request.UpdateLastestMessageRequest;
 import com.example.social_be.model.response.MessageResponse;
 import com.example.social_be.service.ConversationService;
 import jakarta.validation.Valid;
@@ -32,8 +32,8 @@ public class ConversationController {
 
   @PatchMapping("/update/lastestMessage/{id}")
   public ResponseEntity<?> updateLastestMessage(@PathVariable String id,
-      @RequestBody ConversationCollection conversation) {
-    conversationService.updateLastestMessage(id, conversation.getLastestMessage());
+      @Valid @RequestBody UpdateLastestMessageRequest request) {
+    conversationService.updateLastestMessage(id, request.getLastestMessage());
     return ResponseEntity.ok(new MessageResponse("ok"));
   }
 }

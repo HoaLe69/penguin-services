@@ -3,6 +3,9 @@ package com.example.social_be.service;
 import com.example.social_be.exception.ForbiddenException;
 import com.example.social_be.exception.ResourceNotFoundException;
 import com.example.social_be.model.collection.PostCollection;
+import com.example.social_be.model.request.PostEditRequest;
+import com.example.social_be.model.request.PostUploadRequest;
+import com.example.social_be.model.response.PostResponse;
 import com.example.social_be.repository.CommentRepository;
 import com.example.social_be.repository.PostRepository;
 import com.example.social_be.security.SecurityUtils;
@@ -26,24 +29,26 @@ public class PostService {
   @Autowired
   private CommentRepository commentRepository;
 
-  public PostCollection upload(MultipartFile multipartFile, PostCollection postRequest) throws IOException {
+  public PostResponse upload(MultipartFile multipartFile, PostUploadRequest postRequest) throws IOException {
     Map<String, String> resource_url = cloudinary.uploadFile(multipartFile);
     String fileType = postRequest.getFileType();
+    String thumbnail;
+    String videoSrc;
     if (fileType.equals("image")) {
-      postRequest.setThumbnail(resource_url.get("url"));
-      postRequest.setVideoSrc(null);
+      thumbnail = resource_url.get("url");
+      videoSrc = null;
     } else {
-      postRequest.setVideoSrc(resource_url.get("url"));
-      postRequest.setThumbnail(null);
+      videoSrc = resource_url.get("url");
+      thumbnail = null;
     }
-    postRequest.setCloudinaryId(resource_url.get("public_id"));
+    String cloudinaryId = resource_url.get("public_id");
     PostCollection _post = new PostCollection(postRequest.getUserId(), postRequest.getPhotoUrl(),
-        postRequest.getDisplayName(), postRequest.getTag(), postRequest.getThumbnail(), postRequest.getCloudinaryId(),
-        postRequest.getDescription(), postRequest.getFileType(), postRequest.getVideoSrc());
-    return postRepository.save(_post);
+        postRequest.getDisplayName(), postRequest.getTag(), thumbnail, cloudinaryId,
+        postRequest.getDescription(), postRequest.getFileType(), videoSrc);
+    return new PostResponse(postRepository.save(_post));
   }
 
-  public PostCollection edit(MultipartFile multipartFile, PostCollection postCollection, String id, String cloudId)
+  public PostResponse edit(MultipartFile multipartFile, PostEditRequest postEditRequest, String id, String cloudId)
       throws IOException {
     PostCollection _post = postRepository.findPostCollectionById(id);
     if (_post == null)
@@ -51,30 +56,31 @@ public class PostService {
     if (!_post.getUserId().equals(SecurityUtils.currentUserId()))
       throw new ForbiddenException("You are not the owner of this post");
     if (multipartFile != null) {
-      cloudinary.destroy(cloudId, postCollection.getFileType());
+      cloudinary.destroy(cloudId, postEditRequest.getFileType());
       Map<String, String> thumbnail = cloudinary.uploadFile(multipartFile);
       _post.setThumbnail(thumbnail.get("url"));
       _post.setCloudinaryId(thumbnail.get("public_id"));
     }
-    _post.setDescription(postCollection.getDescription());
-    _post.setTag(postCollection.getTag());
-    return postRepository.save(_post);
+    _post.setDescription(postEditRequest.getDescription());
+    _post.setTag(postEditRequest.getTag());
+    return new PostResponse(postRepository.save(_post));
   }
 
-  public Page<PostCollection> getUserFollowing(Collection<String> userIds, Pageable pageable) {
-    return postRepository.findByUserIdIn(userIds, pageable);
+  public Page<PostResponse> getUserFollowing(Collection<String> userIds, Pageable pageable) {
+    return postRepository.findByUserIdIn(userIds, pageable).map(PostResponse::new);
   }
 
-  public Page<PostCollection> getAllPost(Pageable pageable) {
-    return postRepository.findAll(pageable);
+  public Page<PostResponse> getAllPost(Pageable pageable) {
+    return postRepository.findAll(pageable).map(PostResponse::new);
   }
 
-  public Page<PostCollection> getAllPostUser(String id, Pageable pageable) {
-    return postRepository.findAllByUserId(id, pageable);
+  public Page<PostResponse> getAllPostUser(String id, Pageable pageable) {
+    return postRepository.findAllByUserId(id, pageable).map(PostResponse::new);
   }
 
-  public PostCollection getPostById(String id) {
-    return postRepository.findPostCollectionById(id);
+  public PostResponse getPostById(String id) {
+    PostCollection post = postRepository.findPostCollectionById(id);
+    return post == null ? null : new PostResponse(post);
   }
 
   public void deletePost(String id, String cloudId, String fileType) throws IOException {

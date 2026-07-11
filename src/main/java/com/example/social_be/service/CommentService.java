@@ -4,6 +4,7 @@ import com.example.social_be.exception.ResourceNotFoundException;
 import com.example.social_be.model.collection.CommentCollection;
 import com.example.social_be.model.collection.PostCollection;
 import com.example.social_be.model.request.CommentRequestSocket;
+import com.example.social_be.model.response.CommentResponse;
 import com.example.social_be.model.response.CommentResponseSocket;
 import com.example.social_be.repository.CommentRepository;
 import com.example.social_be.repository.PostRepository;
@@ -22,8 +23,8 @@ public class CommentService {
   @Autowired
   private PostRepository postRepository;
 
-  public Page<CommentCollection> getAllComment(String postId, Pageable pageable) {
-    return commentRepository.findAllByPostId(postId, pageable);
+  public Page<CommentResponse> getAllComment(String postId, Pageable pageable) {
+    return commentRepository.findAllByPostId(postId, pageable).map(CommentResponse::new);
   }
 
   public Object handleSocketComment(String postId, CommentRequestSocket commentRequest) {
@@ -66,7 +67,7 @@ public class CommentService {
     CommentCollection savedComment = commentRepository.save(commentCollection);
 
     CommentResponseSocket response = new CommentResponseSocket();
-    response.setComment(savedComment);
+    response.setComment(new CommentResponse(savedComment));
     response.setAmountComment(storedPost.getComments());
     return response;
   }
