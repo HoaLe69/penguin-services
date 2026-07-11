@@ -7,6 +7,7 @@ import com.example.social_be.model.custom.CustomUserDetail;
 import com.example.social_be.repository.CommentRepository;
 import com.example.social_be.repository.PostRepository;
 import com.example.social_be.service.CloudinaryServiceImpl;
+import com.example.social_be.service.PostService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +23,7 @@ import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -54,8 +56,9 @@ class PostControllerSecurityTest {
   @Mock
   private CommentRepository commentRepository;
   @InjectMocks
-  private PostController controller;
+  private PostService postService;
 
+  private PostController controller;
   private MockMvc mockMvc;
 
   private static final String ME = "user-1";
@@ -63,6 +66,9 @@ class PostControllerSecurityTest {
 
   @BeforeEach
   void setup() {
+    controller = new PostController();
+    ReflectionTestUtils.setField(controller, "postService", postService);
+
     mockMvc = MockMvcBuilders.standaloneSetup(controller)
         .setControllerAdvice(new GlobalExceptionHandler())
         .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
