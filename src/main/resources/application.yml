@@ -10,6 +10,14 @@ spring:
       # data that violates a new unique index (userName, socialId), index
       # creation will fail loudly at boot rather than silently skip it.
       auto-index-creation: true
+    web:
+      pageable:
+        # One contract for every Pageable-typed controller param: page/size
+        # query params (0-indexed), a sane default, and a hard cap so a
+        # client can't request an unbounded page.
+        default-page-size: 10
+        max-page-size: 50
+        one-indexed-parameters: false
 
 social-app:
   cookie:

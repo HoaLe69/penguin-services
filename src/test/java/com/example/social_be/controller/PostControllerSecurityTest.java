@@ -18,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -32,10 +33,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -62,6 +65,7 @@ class PostControllerSecurityTest {
   void setup() {
     mockMvc = MockMvcBuilders.standaloneSetup(controller)
         .setControllerAdvice(new GlobalExceptionHandler())
+        .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
         .build();
     var principal = new CustomUserDetail(ME, "me", "me@x", "Me", null, null,
         List.of(), List.of(), List.of(), "pw");
@@ -140,6 +144,29 @@ class PostControllerSecurityTest {
     ArgumentCaptor<Collection<String>> idsCaptor = ArgumentCaptor.forClass(Collection.class);
     verify(postRepository).findByUserIdIn(idsCaptor.capture(), any(Pageable.class));
     assertThat(idsCaptor.getValue()).containsExactly("user-2", "user-3", "user-4");
-    verify(postRepository, never()).findAllByUserId(anyString());
+    verify(postRepository, never()).findAllByUserId(anyString(), any(Pageable.class));
+  }
+
+  @Test
+  void getAllPost_sortsBy_createAt_descending() throws Exception {
+    when(postRepository.findAll(any(Pageable.class))).thenReturn(Page.empty());
+
+    mockMvc.perform(get("/api/post/all-post"))
+        .andExpect(status().isOk());
+
+    ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+    verify(postRepository).findAll(pageableCaptor.capture());
+    assertThat(pageableCaptor.getValue().getSort().getOrderFor("createAt")).isNotNull();
+    assertThat(pageableCaptor.getValue().getSort().getOrderFor("createAt").isDescending()).isTrue();
+  }
+
+  @Test
+  void getAllPostUser_isPaged() throws Exception {
+    when(postRepository.findAllByUserId(eq(ME), any(Pageable.class))).thenReturn(Page.empty());
+
+    mockMvc.perform(get("/api/post/all-post-user/" + ME))
+        .andExpect(status().isOk());
+
+    verify(postRepository).findAllByUserId(eq(ME), any(Pageable.class));
   }
 }

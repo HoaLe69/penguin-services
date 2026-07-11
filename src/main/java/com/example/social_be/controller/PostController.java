@@ -11,9 +11,9 @@ import com.example.social_be.security.SecurityUtils;
 import com.example.social_be.service.CloudinaryServiceImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,9 +26,6 @@ import java.util.Map;
 @RestController
 @RequestMapping(value = "/api/post")
 public class PostController {
-  // Matches the page size already used by getAllPost, for consistency.
-  private static final int FEED_PAGE_SIZE = 2;
-
   @Autowired
   private CloudinaryServiceImpl cloudinary;
   @Autowired
@@ -88,22 +85,22 @@ public class PostController {
 
   @PostMapping("/all-post-user-following")
   public ResponseEntity<?> getUserFollowing(@Valid @RequestBody RequestList list,
-      @RequestParam(defaultValue = "0") int page) {
-    Pageable pageable = PageRequest.of(page, FEED_PAGE_SIZE, Sort.by("createAt").descending());
+      @PageableDefault(sort = "createAt", direction = Sort.Direction.DESC) Pageable pageable) {
     return ResponseEntity.ok(postRepository.findByUserIdIn(list.getList(), pageable));
   }
 
   // get all post
   @GetMapping("/all-post")
-  public ResponseEntity<?> getAllPost(@RequestParam("page") String page) {
-    Pageable pageable = PageRequest.of(Integer.parseInt(page), 2, Sort.by("createAt").descending());
+  public ResponseEntity<?> getAllPost(
+      @PageableDefault(sort = "createAt", direction = Sort.Direction.DESC) Pageable pageable) {
     return ResponseEntity.ok(postRepository.findAll(pageable));
   }
 
   // get all post of user
   @GetMapping("/all-post-user/{id}")
-  public ResponseEntity<?> getAllPostUser(@PathVariable String id) {
-    return ResponseEntity.ok(postRepository.findAllByUserId(id));
+  public ResponseEntity<?> getAllPostUser(@PathVariable String id,
+      @PageableDefault(sort = "createAt", direction = Sort.Direction.DESC) Pageable pageable) {
+    return ResponseEntity.ok(postRepository.findAllByUserId(id, pageable));
   }
 
   @GetMapping("/{id}")
