@@ -1,5 +1,6 @@
 package com.example.social_be.controller;
 
+import com.example.social_be.exception.ResourceNotFoundException;
 import com.example.social_be.model.collection.UserCollection;
 import com.example.social_be.model.custom.CustomUserDetail;
 import com.example.social_be.model.request.RequestList;
@@ -33,11 +34,8 @@ public class UserController {
   private static final int SEARCH_MIN_LENGTH = 2;
   private static final int SEARCH_MAX_RESULTS = 3;
 
-  // private static final Logger logger =
-  // LoggerFactory.getLogger(UserController.class);
   @Autowired
   private UserRepository userRepository;
-  // get user by id
   @Autowired
   private PasswordEncoder encoder;
 
@@ -64,29 +62,23 @@ public class UserController {
 
   @GetMapping("/verify")
   public ResponseEntity<?> verifyUser() {
-    try {
-      Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-      if (authentication != null) {
-        CustomUserDetail userDetail = (CustomUserDetail) authentication.getPrincipal();
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    if (authentication != null) {
+      CustomUserDetail userDetail = (CustomUserDetail) authentication.getPrincipal();
 
-        return ResponseEntity.ok(new UserResponse(userDetail.get_id(), userDetail.getUsername(), userDetail.getEmail(),
-            userDetail.getDisplayName(), userDetail.getAvatar(), userDetail.getAvatar(), userDetail.getFollower(),
-            userDetail.getFollowing()));
-      }
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User is not authenticated");
-    } catch (Exception ex) {
-      throw ex;
+      return ResponseEntity.ok(new UserResponse(userDetail.get_id(), userDetail.getUsername(), userDetail.getEmail(),
+          userDetail.getDisplayName(), userDetail.getAvatar(), userDetail.getAvatar(), userDetail.getFollower(),
+          userDetail.getFollowing()));
     }
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User is not authenticated");
   }
 
   @GetMapping("/{id}")
   public ResponseEntity<?> getUserById(@PathVariable String id) {
-    try {
-      UserCollection userCollection = userRepository.findUserCollectionById(id);
-      return ResponseEntity.ok(new UserResponse(userCollection));
-    } catch (Exception ex) {
-      return ResponseEntity.notFound().build();
-    }
+    UserCollection userCollection = userRepository.findUserCollectionById(id);
+    if (userCollection == null)
+      throw ResourceNotFoundException.of("User", id);
+    return ResponseEntity.ok(new UserResponse(userCollection));
   }
 
   @PostMapping("/getUserFollow")
@@ -102,16 +94,12 @@ public class UserController {
   @PatchMapping("/update/{id}")
   public ResponseEntity<?> updateUser(@Valid @RequestBody UserUpdateRequest update, @PathVariable String id) {
     SecurityUtils.requireSelf(id);
-    try {
-      UserCollection user = userRepository.findUserCollectionById(id);
-      if (user == null)
-        return ResponseEntity.badRequest().body("Invalid user id");
-      user.setAbout(update.getAbout());
-      UserCollection savedUser = userRepository.save(user);
-      return ResponseEntity.ok(new UserResponse(savedUser));
-    } catch (Exception ex) {
-      return ResponseEntity.badRequest().body(new MessageResponse("Something wrong"));
-    }
+    UserCollection user = userRepository.findUserCollectionById(id);
+    if (user == null)
+      throw ResourceNotFoundException.of("User", id);
+    user.setAbout(update.getAbout());
+    UserCollection savedUser = userRepository.save(user);
+    return ResponseEntity.ok(new UserResponse(savedUser));
   }
 
   // delete user by id
@@ -138,28 +126,24 @@ public class UserController {
       List<String> listFollowing = currentUser.getFollowing();
       // list follower of visiter
       List<String> listFollower = userFollow.getFollower();
-      try {
-        if (!listFollowing.contains(visiter)) {
-          // follow
-          listFollowing.add(visiter);
-          currentUser.setFollowing(listFollowing);
-          userRepository.save(currentUser);
-          listFollower.add(currentId);
-          userFollow.setFollower(listFollower);
-          userRepository.save(userFollow);
-          return ResponseEntity.ok(new UserResponse(userFollow));
-        } else {
-          // unfolllow
-          listFollowing.remove(visiter);
-          currentUser.setFollowing(listFollowing);
-          userRepository.save(currentUser);
-          listFollower.remove(currentId);
-          userFollow.setFollower(listFollower);
-          userRepository.save(userFollow);
-          return ResponseEntity.ok(new UserResponse(userFollow));
-        }
-      } catch (Exception ex) {
-        throw new RuntimeException("fail to perform follow!!", ex);
+      if (!listFollowing.contains(visiter)) {
+        // follow
+        listFollowing.add(visiter);
+        currentUser.setFollowing(listFollowing);
+        userRepository.save(currentUser);
+        listFollower.add(currentId);
+        userFollow.setFollower(listFollower);
+        userRepository.save(userFollow);
+        return ResponseEntity.ok(new UserResponse(userFollow));
+      } else {
+        // unfolllow
+        listFollowing.remove(visiter);
+        currentUser.setFollowing(listFollowing);
+        userRepository.save(currentUser);
+        listFollower.remove(currentId);
+        userFollow.setFollower(listFollower);
+        userRepository.save(userFollow);
+        return ResponseEntity.ok(new UserResponse(userFollow));
       }
     } else {
       return ResponseEntity.badRequest().body(new MessageResponse("You can't not follow yourself!!!"));
