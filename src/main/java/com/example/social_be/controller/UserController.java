@@ -10,8 +10,10 @@ import com.example.social_be.repository.CommentRepository;
 import com.example.social_be.repository.PostRepository;
 import com.example.social_be.repository.UserRepository;
 import com.example.social_be.security.SecurityUtils;
+import com.example.social_be.util.Utilties;
 
 import org.springframework.security.core.Authentication;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +31,9 @@ import java.util.stream.Collectors;
 @RequestMapping(value = "/api/user")
 public class UserController {
 
+  private static final int SEARCH_MIN_LENGTH = 2;
+  private static final int SEARCH_MAX_RESULTS = 3;
+
   // private static final Logger logger =
   // LoggerFactory.getLogger(UserController.class);
   @Autowired
@@ -45,8 +50,14 @@ public class UserController {
 
   @GetMapping("/search")
   public ResponseEntity<?> searchUser(@RequestParam String email) {
-    List<UserResponse> results = userRepository.findByLikeEmail(email).stream()
-        .limit(3)
+    String query = email == null ? "" : email.trim();
+    if (query.length() < SEARCH_MIN_LENGTH) {
+      return ResponseEntity.ok(List.of());
+    }
+    String pattern = Utilties.anchoredLiteralPrefix(query);
+    List<UserResponse> results = userRepository
+        .findByLikeEmail(pattern, PageRequest.of(0, SEARCH_MAX_RESULTS))
+        .stream()
         .map(UserResponse::new)
         .collect(Collectors.toList());
     return ResponseEntity.ok(results);
